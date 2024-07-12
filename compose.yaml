@@ -1,0 +1,72 @@
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker Compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
+
+# Here the instructions define your application as a service called "server".
+# This service is built from the Dockerfile in the current directory.
+# You can add other services your application may depend on here, such as a
+# database or a cache. For examples, see the Awesome Compose repository:
+# https://github.com/docker/awesome-compose
+services:
+  server:
+    build:
+      context: .
+    ports:
+      - 8000:8000
+    environment:
+      - SQL_PASS=/run/secrets/db-password
+      - MYSQL_ROOT_PASSWORD=/run/secrets/db-password
+      - TWILIO_ACCOUNT_SID=/run/secrets/twilio-sid
+      - TWILIO_AUTH_TOKEN=/run/secrets/twilio-token
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - db-password
+      - twilio-sid
+      - twilio-token
+
+# The section below is an example of how to define a PostgreSQL
+# database that your application can use. `depends_on` tells Docker Compose to
+# start the database before your application. The `db-data` volume persists the
+# database data between container restarts. The `db-password` secret is used
+# to set the database password.
+
+  db:
+    # We use a mariadb image which supports both amd64 & arm64 architecture
+    #image: mariadb:10-focal
+    # If you really want to use MySQL, uncomment the following line
+    image: mysql:8
+    restart: always
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --password="$$(cat /run/secrets/db-password)" --silent']
+      interval: 3s
+      retries: 5
+      start_period: 30s
+    secrets:
+      - db-password
+    volumes:
+      - db-data:/usr/local/mysql/data/callassure
+      - type: bind
+        source: ./initial-data
+        target: /docker-entrypoint-initdb.d/
+    environment:
+      - MYSQL_DATABASE=callassure
+      - MYSQL_USER=mysql
+      - MYSQL_ROOT_PASSWORD=/run/secrets/db-password
+      - MYSQL_PASSWORD=/run/secrets/db-password
+    expose:
+      - 3306
+      - 33060
+
+volumes:
+  db-data:
+    external: true
+
+secrets:
+  db-password:
+    file: db/password.txt
+  twilio-sid:
+    file: db/sid.txt
+  twilio-token:
+    file: db/auth.txt

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<br>
+<head>
+<style>
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  .container {
+    padding: 0 100px;
+  }
+  .button {
+    background-color: white;
+    color: black;
+    border: 2px solid #04AA6D;
+    padding: 20px;
+    transition-duration: 0.4s;
+    display: block;
+    margin: 20px auto;
+    text-align: center;
+    font-size: 20px;
+    border-radius: 4px;
+}
+  .button:hover {
+    background-color: #04AA6D;
+    color: white;
+}
+  input[type="checkbox"], input[type="time"] {
+    font-size: 20px;
+    border: 2px solid pink;
+    border-radius: 4px;
+    padding: 10px;
+    margin-left: 20px;
+}
+input[type="time"] {
+    font-size: 16px;
+    border: 2px solid pink;
+    border-radius: 4px;
+    padding: 5px;
+    margin-left: 20px;
+}
+h2 {
+    margin-left: 20px;
+}
+.label-left {
+    margin-left: 20px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>Hello, {{name}}! </h2>
+    <h1 style="text-align: center;">Configure your check-in's here</h1>
+    <form action="" method="post">
+        <h2>Select Days of the Week:</h2>
+        <div>
+            <input type="checkbox" id="Monday" name="days" value="1">
+            <label for="Monday" class="label-left">Monday</label><br>
+
+            <input type="checkbox" id="Tuesday" name="days" value="2">
+            <label for="Tuesday" class="label-left">Tuesday</label><br>
+
+            <input type="checkbox" id="Wednesday" name="days" value="3">
+            <label for="Wednesday" class="label-left">Wednesday</label><br>
+
+            <input type="checkbox" id="Thursday" name="days" value="4">
+            <label for="Thursday" class="label-left">Thursday</label><br>
+
+            <input type="checkbox" id="Friday" name="days" value="5">
+            <label for="Friday" class="label-left">Friday</label><br>
+
+            <input type="checkbox" id="Saturday" name="days" value="6">
+            <label for="Saturday" class="label-left">Saturday</label><br>
+
+            <input type="checkbox" id="Sunday" name="days" value="7">
+            <label for="Sunday" class="label-left">Sunday</label><br>
+        </div>
+
+        <h2>Select Check-in Method:</h2>
+        <div>
+            <input type="checkbox" id="phone" name="checkin_method" value="1">
+            <label for="phone" class="label-left">Phone Call</label><br>
+
+            <input type="checkbox" id="text" name="checkin_method" value="2">
+            <label for="text" class="label-left">Text Message</label><br>
+
+            <input type="checkbox" id="app" name="checkin_method" value="3">
+            <label for="app" class="label-left">App</label><br>
+
+            <input type="checkbox" id="email" name="checkin_method" value="4">
+            <label for="email" class="label-left">Email</label><br>
+        </div>
+
+        <h2>Select a Time:</h2>
+        <div>
+            <label for="checkin" class="label-left">Check-in Time:</label>
+            <input type="time" id="checkin" name="checkin"><br><br>
+        </div>
+
+        <input class="button" type="submit" value="Register">
+    </form>
+
+    <!-- errors -->
+    {% if error %}
+        <p class="error"><strong>Error:</strong> {{ error }}</p>
+    {% endif %}
+
+    <!-- messages -->
+    {% for message in get_flashed_messages() %}
+        {{ message }}
+    {% endfor %}
+</div>
+</body>
+<p>Click <a href="/logout">here</a> to logout.</p>
+</html>

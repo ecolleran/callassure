@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<br>
+<head>
+<style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .button {
+      background-color: white;
+      color: black;
+      border: 2px solid #04AA6D;
+      padding: 20px;
+      transition-duration: 0.4s;
+      display: block;
+      margin: 0 auto;
+    }
+    .button:hover {
+      background-color: #04AA6D;
+      color: white;
+    }
+    input {
+      font-size: 20px;
+      border: 2px solid pink;
+      border-radius: 4px;
+      padding: 20px;
+    }
+    .center {
+      text-align: center;
+    }
+  </style>
+  </head>
+  
+  <div class="center">
+    <h1>Enter Login Credentials Here</h1>
+  <form action="" method="post">
+    <input type="text" placeholder="email" name="email" value="{{
+    request.form.email }}">
+  
+    <input type="password" placeholder="Password" name="password" value="{{
+    request.form.password }}">
+  
+    <h2> </h2>
+    
+    <input class="button" type="submit" value="Login"></button>
+  </form>
+  </div>
+  
+<!-- errors -->
+{% if error %}
+    <p class="error"><strong>Error:</strong> {{ error }}</p>
+{% endif %}
+
+<!-- messages -->
+{% for message in get_flashed_messages() %}
+    {{ message }}
+{% endfor %}
+
+</div>
+
+</body>
