@@ -46,7 +46,7 @@ services:
     secrets:
       - db-password
     volumes:
-      - db-data:/usr/local/mysql/data/callassure
+      - /usr/local/mysql/data/callassure:/db-data
       - type: bind
         source: ./initial-data
         target: /docker-entrypoint-initdb.d/
@@ -61,7 +61,6 @@ services:
 
 volumes:
   db-data:
-    external: true
 
 secrets:
   db-password:
