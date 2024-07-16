@@ -8,7 +8,7 @@ import MySQLdb
 mysql = get_connection()
 
 def hello():
-  return "Welcome to CallAssure ~we're still under construction~!"
+  return render_template('welcome.html')
 
 def register():
     error = None

@@ -9,6 +9,7 @@ from twillio import *
 from datetime import datetime
 import json
 from MySQLdb.cursors import DictCursor
+import uuid
 
 ### SCEDULER & LOGGING ###
 #logging.basicConfig(level=logging.DEBUG)
@@ -49,14 +50,17 @@ def schedule_checkins():
 
         for checkin in checkins: 
             member, method, deadline=checkin
-            query="select phonenumber from members where user_id=%s;"
+            query="select firstname, phonenumber from members where user_id=%s;"
             cursor.execute(query, (member,))
-            phonenumber = cursor.fetchall()
+            result = cursor.fetchall()
+            name = result[0][0]
+            phonenumber = result [0][1]
             phonenumber='+1'+phonenumber[0][0].replace("-", "")
 
             # Schedule the job
             trigger = CronTrigger(day_of_week=today-1, hour=hour, minute=minute)
-            job_id=str(member)+dayhrmin
+            #job_id=str(member)+dayhrmin+name
+            job_id = f"{member}-{dayhrmin}-{name}-{str(uuid.uuid4())}"
             scheduler.add_job(send_text, trigger, args=[phonenumber], id=job_id)
     cursor.close()
 
