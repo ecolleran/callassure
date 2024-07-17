@@ -9,6 +9,7 @@ from schedule_verify import *
 from sql_connection import get_app
 from texts import *
 from twillio import *
+from datetime import datetime
 
 #get app from sql_connection
 app = get_app()
@@ -29,7 +30,11 @@ app.add_url_rule('/dynamic-sms', methods=['GET', 'POST'], view_func=incoming_sms
 
 # scheduler
 with app.app_context():
-  schedule_checkins()
+  scheduler.start()
+  scheduler.remove_all_jobs()
+  #today=datetime.now().isoweekday()
+  for day in range(7):
+    schedule_checkins(day)
 
 ### MAIN ###
 if __name__ == "__main__":

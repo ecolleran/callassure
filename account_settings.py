@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, session, redirect, url_for, f
 from login_required_wrapper import login_required
 import hashlib
 from sql_connection import get_connection
+from schedule_verify import add_new_job
 import MySQLdb
 
 #sql cursor from sql_connection for queries
@@ -98,7 +99,7 @@ def settings():
     user_id = session['user_id']
     firstname = session['firstname']
     if request.method== 'POST':
-        checkin_time=request.form['checkin']
+        deadline=request.form['checkin']
         days_of_week = request.form.getlist('days')
         methods = request.form.getlist('checkin_method')
         
@@ -112,9 +113,10 @@ def settings():
                     ) VALUES (
                         %s, %s, %s, %s
                     )""",
-                    [user_id, day, checkin_time, method])
+                    [user_id, day, deadline, method])
             mysql.connection.commit()
             flash('Check-ins Registered!')
+
         except MySQLdb.IntegrityError as e:
             error = 'Username already in use. Please use another username'
             print(f"IntegrityError: {e}")
@@ -128,4 +130,9 @@ def settings():
         # close connection
         mysql.connection.commit()
         cursor.close()
+
+        for day in days_of_week:
+            for method in methods:
+                add_new_job(user_id, day, deadline, method)
+
     return render_template('settings.html', error=error, name=firstname)
