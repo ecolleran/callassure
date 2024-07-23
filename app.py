@@ -31,9 +31,9 @@ app.add_url_rule('/dynamic-sms', methods=['GET', 'POST'], view_func=incoming_sms
 # scheduler
 with app.app_context():
   scheduler.start()
-  scheduler.remove_all_jobs()
+  #scheduler.remove_all_jobs()
   #today=datetime.now().isoweekday()
-  for day in range(7):
+  for day in range(1, 8):
     schedule_checkins(day)
 
 ### MAIN ###

@@ -1,17 +1,15 @@
 <!DOCTYPE html>
 <html>
-
-<br>
 <head>
 <style>
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-  }
-  .container {
+}
+.container {
     padding: 0 100px;
-  }
-  .button {
+}
+.button {
     background-color: white;
     color: black;
     border: 2px solid #04AA6D;
@@ -23,11 +21,11 @@ body {
     font-size: 20px;
     border-radius: 4px;
 }
-  .button:hover {
+.button:hover {
     background-color: #04AA6D;
     color: white;
 }
-  input[type="checkbox"], input[type="time"] {
+input[type="checkbox"], input[type="time"] {
     font-size: 20px;
     border: 2px solid pink;
     border-radius: 4px;
@@ -53,7 +51,7 @@ h2 {
 <div class="container">
     <h2>Hello, {{name}}! </h2>
     <h1 style="text-align: center;">Configure your check-in's here</h1>
-    <form action="" method="post">
+    <form id="settingsForm" method="post">
         <h2>Select Days of the Week:</h2>
         <div>
             <input type="checkbox" id="Monday" name="days" value="1">
@@ -99,6 +97,8 @@ h2 {
             <input type="time" id="checkin" name="checkin"><br><br>
         </div>
 
+        <input type="hidden" id="timezone" name="timezone">
+
         <input class="button" type="submit" value="Register">
     </form>
 
@@ -112,6 +112,23 @@ h2 {
         {{ message }}
     {% endfor %}
 </div>
-</body>
+
 <p>Click <a href="/logout">here</a> to logout.</p>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timezoneInput = document.getElementById('timezone');
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    timezoneInput.value = timezone;
+});
+
+document.getElementById('settingsForm').addEventListener('submit', function(event) {
+    const timezoneInput = document.getElementById('timezone');
+    if (!timezoneInput.value) {
+        event.preventDefault();
+        alert('Timezone is not set.');
+    }
+});
+</script>
+</body>
 </html>

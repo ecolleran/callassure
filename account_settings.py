@@ -5,6 +5,9 @@ from sql_connection import get_connection
 from schedule_verify import add_new_job
 import MySQLdb
 
+import pytz
+from datetime import datetime
+
 #sql cursor from sql_connection for queries
 mysql = get_connection()
 
@@ -95,13 +98,30 @@ def login():
 
 @login_required
 def settings():
-    error=None
+    error = None
     user_id = session['user_id']
     firstname = session['firstname']
-    if request.method== 'POST':
-        deadline=request.form['checkin']
+    if request.method == 'POST':
+        deadline = request.form['checkin']
+        print(deadline)
         days_of_week = request.form.getlist('days')
         methods = request.form.getlist('checkin_method')
+        timezone_str = request.form['timezone']
+        print(timezone_str)
+        
+        # Get current date
+        today = datetime.now().date()
+        # Combine current date with user-provided time
+        local_time_str = f"{today} {deadline}"
+        local_time = datetime.strptime(local_time_str, '%Y-%m-%d %H:%M')
+        
+        # Convert deadline to UTC
+        local_tz = pytz.timezone(timezone_str)
+        local_time = local_tz.localize(local_time)  # Localize the time
+        print(local_time)
+        utc_time = local_time.astimezone(pytz.utc)  # Convert to UTC
+        utc_deadline = utc_time.strftime('%H:%M:%S')  # Format as string for SQL
+        print(utc_deadline)
         
         cursor = mysql.connection.cursor()
         try:
@@ -113,7 +133,7 @@ def settings():
                     ) VALUES (
                         %s, %s, %s, %s
                     )""",
-                    [user_id, day, deadline, method])
+                    [user_id, day, utc_deadline, method])
             mysql.connection.commit()
             flash('Check-ins Registered!')
 
@@ -127,12 +147,12 @@ def settings():
             error = 'An unexpected error occurred. Please try again.'
             print(f"Unexpected Error: {e}")
 
-        # close connection
-        mysql.connection.commit()
+        # Close connection
         cursor.close()
 
+        # Pass UTC time to add_new_job function
         for day in days_of_week:
             for method in methods:
-                add_new_job(user_id, day, deadline, method)
+                add_new_job(user_id, day, utc_deadline, method)
 
     return render_template('settings.html', error=error, name=firstname)

@@ -8,6 +8,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twillio import *
 import json
 from MySQLdb.cursors import DictCursor
+from datetime import datetime
 import uuid
 
 ### SCEDULER & LOGGING ###
@@ -88,7 +89,7 @@ def show_jobs():
             'next_run_time': str(job.next_run_time)
         }
         job_list.append(job_info)
-    return (jsonify(job_list), 200)
+    return render_template('jobs.html', jobs=job_list)
 
 ### VERIFY & LOG ###
 def log_sms_staus():
