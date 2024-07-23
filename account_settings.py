@@ -105,6 +105,7 @@ def settings():
         deadline = request.form['checkin']
         print(deadline)
         days_of_week = request.form.getlist('days')
+        print(days_of_week)
         methods = request.form.getlist('checkin_method')
         timezone_str = request.form['timezone']
         print(timezone_str)
@@ -153,6 +154,6 @@ def settings():
         # Pass UTC time to add_new_job function
         for day in days_of_week:
             for method in methods:
-                add_new_job(user_id, day, utc_deadline, method)
+                add_new_job(user_id, int(day), utc_deadline, method)
 
     return render_template('settings.html', error=error, name=firstname)

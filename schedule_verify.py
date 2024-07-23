@@ -62,8 +62,8 @@ def add_new_job(user_id, day, deadline, method):
     deadline_split=deadline.split(":")
     hour = int(deadline_split[0])
     minute = int(deadline_split[1])
-    today=datetime.now().isoweekday()
-    dayhrmin=str(today)+str(hour)+str(minute)
+    dayhrmin=str(day)+str(hour)+str(minute)
+    day=int(day)
 
     cursor = mysql.connection.cursor()
     query="select phonenumber from members where user_id=%s;"
@@ -73,7 +73,7 @@ def add_new_job(user_id, day, deadline, method):
     cursor.close()
 
     # Schedule the job
-    trigger = CronTrigger(day_of_week=today-1, hour=hour, minute=minute)
+    trigger = CronTrigger(day_of_week=day-1, hour=hour, minute=minute)
     #job_id=str(member)+dayhrmin+name
     job_id = f"{str(user_id)}-{dayhrmin}-{str(uuid.uuid4())}"
     scheduler.add_job(send_text, trigger, args=[phonenumber], id=job_id)
