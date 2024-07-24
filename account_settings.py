@@ -99,6 +99,7 @@ def login():
 @login_required
 def settings():
     error = None
+    commited = False
     user_id = session['user_id']
     firstname = session['firstname']
     if request.method == 'POST':
@@ -130,12 +131,13 @@ def settings():
                 for method in methods:
                     cursor.execute("""
                     INSERT INTO checkin_schedule(
-                        member_id, dayofweek, deadline, method_id
+                        member_id, dayofweek, deadline, timezone, method_id
                     ) VALUES (
-                        %s, %s, %s, %s
+                        %s, %s, %s, %s, %s
                     )""",
-                    [user_id, day, utc_deadline, method])
+                    [user_id, day, utc_deadline, timezone_str, method])
             mysql.connection.commit()
+            commited = True
             flash('Check-ins Registered!')
 
         except MySQLdb.IntegrityError as e:
@@ -147,13 +149,11 @@ def settings():
         except Exception as e:
             error = 'An unexpected error occurred. Please try again.'
             print(f"Unexpected Error: {e}")
-
-        # Close connection
         cursor.close()
 
-        # Pass UTC time to add_new_job function
-        for day in days_of_week:
-            for method in methods:
-                add_new_job(user_id, int(day), utc_deadline, method)
+        if commited:
+            for day in days_of_week:
+                for method in methods:
+                    add_new_job(user_id, int(day), utc_deadline, method)
 
     return render_template('settings.html', error=error, name=firstname)
