@@ -2,9 +2,11 @@ from flask import Flask, render_template, request, session, redirect, url_for, f
 from login_required_wrapper import login_required
 from sql_connection import get_connection
 from twilio.twiml.messaging_response import MessagingResponse
+from twillio import *
 
 #sql cursor from sql_connection for queries
 mysql = get_connection()
+client = get_client()
 
 ### RESPONSES ###
 GOOD_BOY_URL = (
@@ -17,7 +19,7 @@ def sms_reply():
     resp = MessagingResponse()
 
     # Add a message
-    resp.message("The Robots are coming! Head for the hills!", action='https://smart-goat-modern.ngrok-free.app/message-status', method='POST')
+    resp.message("That is great to hear. Thank you for checking in!", action='https://smart-goat-modern.ngrok-free.app/message-status', method='POST')
 
     return str(resp)
 

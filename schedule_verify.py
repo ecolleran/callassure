@@ -38,7 +38,7 @@ def schedule_checkins(day):
         total_seconds = time[0].total_seconds()
         hour = int(total_seconds // 3600)
         minute = int((total_seconds % 3600) // 60)
-        dayhrmin=str(day)+str(hour)+str(minute)
+        dayhrmin=str(day)+"-"+str(hour)+":"+str(minute)
 
         query="select member_id, method_id, deadline from checkin_schedule where dayofweek=%s and deadline=%s order by method_id;"
         cursor.execute(query, (day, time[0],))
@@ -52,9 +52,8 @@ def schedule_checkins(day):
             phonenumber='+1'+phonenumber[0][0].replace("-", "")
 
             # Schedule the job
-            trigger = CronTrigger(day_of_week=day-1, hour=hour, minute=minute)
-            #job_id=str(member)+dayhrmin+name
-            job_id = f"{str(member)}-{dayhrmin}-{str(uuid.uuid4())}"
+            trigger = CronTrigger(day_of_week=day-1, hour=hour, minute=minute, timezone="UTC")
+            job_id = f"{str(member)}-{dayhrmin}"
             scheduler.add_job(send_text, trigger, args=[phonenumber], id=job_id)
     cursor.close()
 
@@ -62,7 +61,7 @@ def add_new_job(user_id, day, deadline, method):
     deadline_split=deadline.split(":")
     hour = int(deadline_split[0])
     minute = int(deadline_split[1])
-    dayhrmin=str(day)+str(hour)+str(minute)
+    dayhrmin=str(day)+"-"+str(hour)+":"+str(minute)
     day=int(day)
 
     cursor = mysql.connection.cursor()
@@ -73,9 +72,8 @@ def add_new_job(user_id, day, deadline, method):
     cursor.close()
 
     # Schedule the job
-    trigger = CronTrigger(day_of_week=day-1, hour=hour, minute=minute)
-    #job_id=str(member)+dayhrmin+name
-    job_id = f"{str(user_id)}-{dayhrmin}-{str(uuid.uuid4())}"
+    trigger = CronTrigger(day_of_week=day-1, hour=hour, minute=minute, timezone="UTC")
+    job_id = f"{str(user_id)}-{dayhrmin}"
     scheduler.add_job(send_text, trigger, args=[phonenumber], id=job_id)
 
 def show_jobs():
@@ -94,8 +92,18 @@ def show_jobs():
 ### VERIFY & LOG ###
 def log_sms_staus():
     if request.method == 'POST':
+         # Log the entire request for debugging
+        '''print("Headers: ", request.headers)
+        print("Form: ", request.form)
+        print("Args: ", request.args)
+        print("Values: ", request.values)
+        print("JSON: ", request.json)'''
+
         message_sid = request.values.get('MessageSid', None)
         message_status = request.values.get('MessageStatus', None)
+        '''sent_to = request.values.get('To', None)
+        sent_to=sent_to[2:]
+        print(sent_to)'''
 
         cursor = mysql.connection.cursor()
         cursor.execute("""

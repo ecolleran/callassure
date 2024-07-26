@@ -22,6 +22,8 @@ auth_token = os.environ['TWILIO_AUTH_TOKEN']
 
 client = Client(account_sid, auth_token)
 
+def get_client():
+    return client
 
 def send_text(to_text):
     message = client.messages.create(
@@ -31,7 +33,7 @@ def send_text(to_text):
         provide_feedback=True,
         messaging_service_sid='MGe6e6b3eed7d69cfda67f4b83e4b837a5',
         to=to_text)
-    print(f'Message sent, SID:{message.sid}')
+    print(f'Message sent to {to_text}, SID:{message.sid}')
 
 def make_call(to_call):
     call = client.calls.create(
@@ -53,17 +55,3 @@ def retrieve_message_multi(limit=20):
 
     for record in messages:
         print(record.sid)
-
-def hi():
-    print("hi")
-
-def main():
-    print("hi")
-    time_at="14:39"
-    schedule.every().day.at(time_at, "America/Los_Angeles").do(send_text)
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
-if __name__ == '__main__':
-    main()

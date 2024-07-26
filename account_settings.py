@@ -36,6 +36,7 @@ def register():
                 )""", 
                 [firstname, lastname, email, password, phonenumber, 1])
             flash('Account created!')
+            return redirect(url_for('login.html'))
         except MySQLdb.IntegrityError as e:
             error = 'Account already in use. Please use another name'
             print(f"IntegrityError: {e}")
