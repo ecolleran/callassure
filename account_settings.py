@@ -103,27 +103,24 @@ def settings():
     commited = False
     user_id = session['user_id']
     firstname = session['firstname']
+    
     if request.method == 'POST':
         deadline = request.form['checkin']
-        print(deadline)
         days_of_week = request.form.getlist('days')
-        print(days_of_week)
         methods = request.form.getlist('checkin_method')
         timezone_str = request.form['timezone']
-        print(timezone_str)
         
-        # Get current date
+        #get current date to change tz
         today = datetime.now().date()
-        # Combine current date with user-provided time
         local_time_str = f"{today} {deadline}"
         local_time = datetime.strptime(local_time_str, '%Y-%m-%d %H:%M')
         
-        # Convert deadline to UTC
+        #convert deadline to UTC
         local_tz = pytz.timezone(timezone_str)
-        local_time = local_tz.localize(local_time)  # Localize the time
+        local_time = local_tz.localize(local_time)
         print(local_time)
-        utc_time = local_time.astimezone(pytz.utc)  # Convert to UTC
-        utc_deadline = utc_time.strftime('%H:%M:%S')  # Format as string for SQL
+        utc_time = local_time.astimezone(pytz.utc)
+        utc_deadline = utc_time.strftime('%H:%M:%S') #format for MySQL
         print(utc_deadline)
         
         cursor = mysql.connection.cursor()
@@ -156,5 +153,4 @@ def settings():
             for day in days_of_week:
                 for method in methods:
                     add_new_job(user_id, int(day), utc_deadline, method)
-
     return render_template('settings.html', error=error, name=firstname)

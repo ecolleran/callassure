@@ -6,7 +6,6 @@ from twillio import *
 
 #sql cursor from sql_connection for queries
 mysql = get_connection()
-client = get_client()
 
 ### RESPONSES ###
 GOOD_BOY_URL = (
