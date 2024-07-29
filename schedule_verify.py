@@ -23,7 +23,7 @@ mysql = get_connection()
 def fetch_times(day):
     cursor = mysql.connection.cursor()
     
-    query= "select distinct deadline from checkin_schedule where dayofweek=%s;"
+    query= "select distinct utc_deadline from checkin_schedule where dayofweek=%s;"
     cursor.execute(query, (day,))
     times = cursor.fetchall()
     
@@ -40,7 +40,7 @@ def schedule_checkins(day):
         minute = int((total_seconds % 3600) // 60)
         dayhrmin=str(day)+"-"+str(hour)+":"+str(minute)
 
-        query="select member_id, method_id, deadline from checkin_schedule where dayofweek=%s and deadline=%s order by method_id;"
+        query="select member_id, method_id, utc_deadline from checkin_schedule where dayofweek=%s and utc_deadline=%s order by method_id;"
         cursor.execute(query, (day, time[0],))
         checkins = cursor.fetchall()
 

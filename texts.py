@@ -6,6 +6,7 @@ from twillio import *
 
 #sql cursor from sql_connection for queries
 mysql = get_connection()
+client, twilio_number = get_client()
 
 ### RESPONSES ###
 GOOD_BOY_URL = (
@@ -50,3 +51,36 @@ def incoming_sms():
         resp.message("Goodbye")
 
     return str(resp)
+
+def dynamic_sms(to_text):
+    #reading and formatting incoming message
+    body = request.values.get('Body', '')
+    to = request.values.get('From', '')
+    from_ = request.values.get('To', '')
+    msg_recieved = ''.join(e for e in body if e.isalnum())
+    msg_recieved = msg_recieved.strip().lower()
+
+    # Default message is sent unless key word is found in following loop
+    send_default = True
+
+    # Choose the correct message response and set default to false
+    for keyword, messages in response_messages.items():
+        if keyword == msg_recieved:
+            body = messages['body']
+            send_default = False
+            break
+
+    if send_default:
+        client.messages.create(
+            body=default_message,
+            from_=from_,
+            to=to_text
+        )
+    else:
+        client.messages.create(
+            body=body,
+            from_=from_,
+            to=to_text,
+        )
+
+    return jsonify({"status": "success"}), 200

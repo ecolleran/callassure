@@ -118,10 +118,8 @@ def settings():
         #convert deadline to UTC
         local_tz = pytz.timezone(timezone_str)
         local_time = local_tz.localize(local_time)
-        print(local_time)
         utc_time = local_time.astimezone(pytz.utc)
         utc_deadline = utc_time.strftime('%H:%M:%S') #format for MySQL
-        print(utc_deadline)
         
         cursor = mysql.connection.cursor()
         try:
@@ -129,7 +127,7 @@ def settings():
                 for method in methods:
                     cursor.execute("""
                     INSERT INTO checkin_schedule(
-                        member_id, dayofweek, deadline, timezone, method_id
+                        member_id, dayofweek, utc_deadline, original_timezone, method_id
                     ) VALUES (
                         %s, %s, %s, %s, %s
                     )""",
