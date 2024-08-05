@@ -10,13 +10,13 @@ import json
 from MySQLdb.cursors import DictCursor
 from datetime import datetime
 import uuid
+from calls import *
 
 ### SCEDULER & LOGGING ###
 #logging.basicConfig(level=logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
 scheduler = BackgroundScheduler()
 
-#sql cursor from sql_connection for queries
 mysql = get_connection()
 
 ### SCHEDULE ###
@@ -53,8 +53,11 @@ def schedule_checkins(day):
 
             # Schedule the job
             trigger = CronTrigger(day_of_week=day-1, hour=hour, minute=minute, timezone="UTC")
-            job_id = f"{str(member)}-{dayhrmin}"
-            scheduler.add_job(send_text, trigger, args=[phonenumber], id=job_id)
+            job_id = f"{str(member)}-{dayhrmin}-{str(method)}"
+            if method==2:
+                scheduler.add_job(send_text, trigger, args=[phonenumber], id=job_id)
+            if method=='1':
+                scheduler.add_job(make_call, trigger, args=[phonenumber], id=job_id)
     cursor.close()
 
 def add_new_job(user_id, day, deadline, method):
@@ -62,7 +65,6 @@ def add_new_job(user_id, day, deadline, method):
     hour = int(deadline_split[0])
     minute = int(deadline_split[1])
     dayhrmin=str(day)+"-"+str(hour)+":"+str(minute)
-    day=int(day)
 
     cursor = mysql.connection.cursor()
     query="select phonenumber from members where user_id=%s;"
@@ -73,8 +75,11 @@ def add_new_job(user_id, day, deadline, method):
 
     # Schedule the job
     trigger = CronTrigger(day_of_week=day-1, hour=hour, minute=minute, timezone="UTC")
-    job_id = f"{str(user_id)}-{dayhrmin}"
-    scheduler.add_job(send_text, trigger, args=[phonenumber], id=job_id)
+    job_id = f"{str(user_id)}-{dayhrmin}-{str(method)}"
+    if method==2:
+        scheduler.add_job(send_text, trigger, args=[phonenumber], id=job_id)
+    if method==1:
+        scheduler.add_job(make_call, trigger, args=[phonenumber], id=job_id)
 
 def show_jobs():
     jobs=scheduler.get_jobs()
@@ -92,35 +97,32 @@ def show_jobs():
 ### VERIFY & LOG ###
 def log_sms_staus():
     if request.method == 'POST':
-         # Log the entire request for debugging
-        '''print("Headers: ", request.headers)
-        print("Form: ", request.form)
-        print("Args: ", request.args)
-        print("Values: ", request.values)
-        print("JSON: ", request.json)'''
-
+        body = request.values.get('Body', '')
+        print(body)
+        from_ = request.values.get('From', '')
+        from_=from_[2:]
+        to = request.values.get('To', '')
+        to=to[2:]
         message_sid = request.values.get('MessageSid', None)
         message_status = request.values.get('MessageStatus', None)
-        '''sent_to = request.values.get('To', None)
-        sent_to=sent_to[2:]
-        print(sent_to)'''
 
-        cursor = mysql.connection.cursor()
-        cursor.execute("""
-            INSERT INTO message_logs (message_sid, message_status)
-            VALUES (%s, %s)
-        """, (message_sid, message_status))
-        mysql.connection.commit()
-        cursor.close()
+        if message_status=="delivered":
+            cursor = mysql.connection.cursor()
+            cursor.execute("""
+                INSERT INTO message_logs (`to`, `from`, `body`, `message_sid`, `message_status`)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (to, from_, body, message_sid, message_status))
+            mysql.connection.commit()
+            cursor.close()
 
         return ('Status logged', 200)
     
-    #GET request, fetch and display logs
-    cursor = mysql.connection.cursor(DictCursor)
-    cursor.execute("SELECT * FROM message_logs ORDER BY id DESC")
-    logs = cursor.fetchall()
-    cursor.close()
-    return render_template('message_status.html', logs=logs)
+    if request.method == 'GET':
+        cursor = mysql.connection.cursor(DictCursor)
+        cursor.execute("SELECT * FROM message_logs ORDER BY id DESC")
+        logs = cursor.fetchall()
+        cursor.close()
+        return render_template('message_status.html', logs=logs)
 
 def confirm_sms():
     # unique_id = request.values.get('id', None)

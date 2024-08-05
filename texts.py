@@ -13,6 +13,7 @@ GOOD_BOY_URL = (
     "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?ixlib=rb-1.2.1"
     "&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80")
 
+@validate_twilio_request
 def sms_reply():
     """Respond to incoming calls with a simple text message."""
     # Start our TwiML response
@@ -23,6 +24,7 @@ def sms_reply():
 
     return str(resp)
 
+@validate_twilio_request
 def image_reply():
     try:
         num_media = int(request.values.get("NumMedia"))
@@ -36,6 +38,7 @@ def image_reply():
         msg.media(GOOD_BOY_URL)
     return str(response)
 
+@validate_twilio_request
 def incoming_sms():
     """Send a dynamic reply to an incoming text message"""
     # Get the message the user sent our Twilio number
@@ -52,9 +55,21 @@ def incoming_sms():
 
     return str(resp)
 
-def dynamic_sms(to_text):
+response_messages = {
+    '1' : {
+        'body':'That is great to hear. Enjoy your [day]!'},
+    '2' : {
+        'body':'Thank you for checking-in today. If you would like to have a family member contact you please let us know.'},
+    '3' : {
+        'body': 'Which family member would you like to speak to?'}
+}
+default_message = "I'm not quite sure I understand that response. If you could use some more general keywords that would help me best assist you."
+
+@validate_twilio_request
+def dynamic_sms():
     #reading and formatting incoming message
     body = request.values.get('Body', '')
+    print(body)
     to = request.values.get('From', '')
     from_ = request.values.get('To', '')
     msg_recieved = ''.join(e for e in body if e.isalnum())
@@ -74,13 +89,15 @@ def dynamic_sms(to_text):
         client.messages.create(
             body=default_message,
             from_=from_,
-            to=to_text
+            to=to,
+            status_callback='https://smart-goat-modern.ngrok-free.app/message-status'
         )
     else:
         client.messages.create(
             body=body,
             from_=from_,
-            to=to_text,
+            to=to,
+            status_callback='https://smart-goat-modern.ngrok-free.app/message-status'
         )
 
     return jsonify({"status": "success"}), 200

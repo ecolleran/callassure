@@ -32,6 +32,9 @@
     <table>
         <tr>
             <th>ID</th>
+            <th>To</th>
+            <th>From</th>
+            <th>Body</th>
             <th>Message SID</th>
             <th>Message Status</th>
             <th>Timestamp</th>
@@ -39,6 +42,9 @@
         {% for log in logs %}
         <tr>
             <td>{{ log.id }}</td>
+            <td>{{ log.to }}</td>
+            <td>{{ log.from }}</td>
+            <td>{{ log.body }}</td>
             <td>{{ log.message_sid }}</td>
             <td>{{ log.message_status }}</td>
             <td>{{ log.timestamp }}</td>

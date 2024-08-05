@@ -4,7 +4,10 @@ import schedule
 import time
 import os
 
+from functools import wraps
 from twilio.rest import Client
+from twilio.request_validator import RequestValidator
+from flask import Flask, request, abort, request, url_for, jsonify, current_app
 
 ### TWILIO SETUP ###
 #read secrets from docker as files
@@ -26,10 +29,36 @@ twilio_number='+14252509408'
 def get_client():
     return client, twilio_number
 
+def validate_twilio_request(f):
+    """Validates that incoming requests genuinely originated from Twilio"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        #instance RequestValidator class
+        validator = RequestValidator(auth_token)
+
+        # Validate the request using its URL, POST data,
+        # and X-TWILIO-SIGNATURE header
+        request_valid = validator.validate(
+            request.url,
+            request.form,
+            request.headers.get('X-TWILIO-SIGNATURE', ''))
+
+        #continue processing if request is valid else return a 403 error if
+        if request_valid or current_app.debug:
+            return f(*args, **kwargs)
+        else:
+            return abort(403)
+    return decorated_function
+
+def twiml(resp):
+    resp = flask.Response(str(resp))
+    resp.headers['Content-Type'] = 'text/xml'
+    return resp
+
 def send_text(to_text):
     message = client.messages.create(
         from_=twilio_number, 
-        body='Hello from CallAssure. We are checking in with you for today.', 
+        body='Hello from CallAssure. We are checking in with you for today. Send us a 1 if you are okay or a 2 if you would like your family to check-in with you.', 
         status_callback='https://smart-goat-modern.ngrok-free.app/message-status',
         provide_feedback=True,
         messaging_service_sid='MGe6e6b3eed7d69cfda67f4b83e4b837a5',
@@ -39,10 +68,10 @@ def send_text(to_text):
 
 def make_call(to_call):
     call = client.calls.create(
-        url='http://demo.twilio.com/docs/voice.xml',
+        url='https://smart-goat-modern.ngrok-free.app/call/welcome',
         to=to_call,
         from_=twilio_number)
-    print(call.sid)
+    print(f'Message sent to {to_call}, SID:{call.sid}')
 
 def retrieve_message(sid):
     message = client.messages(sid).fetch()

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, flash
+from flask import Flask, session, redirect, url_for, flash
 from functools import wraps
 
 ### LOGIN ###

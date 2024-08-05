@@ -25,7 +25,7 @@ def register():
         phonenumber = request.form['phonenumber']
         #payment_plan = request.form['payment_plan']
 
-        # try to insert into database (throws error if username already exists)
+        # try to insert into database (throws errors as needed)
         cursor = mysql.connection.cursor()
         try:
             cursor.execute("""
@@ -36,7 +36,7 @@ def register():
                 )""", 
                 [firstname, lastname, email, password, phonenumber, 1])
             flash('Account created!')
-            return redirect(url_for('login.html'))
+            return redirect(url_for('login'))
         except MySQLdb.IntegrityError as e:
             error = 'Account already in use. Please use another name'
             print(f"IntegrityError: {e}")
@@ -55,10 +55,8 @@ def register():
 @login_required
 def logout():
     session.pop('logged_in', None)
-    session.pop('username', None)
-    session.pop('first_name', None)
-    session.pop('id', None)
-    session.pop('search_mode', None)
+    session.pop('user_id', None)
+    session.pop('firstname', None)
 
     flash('You were just logged out :(')
     return redirect(url_for('login'))
@@ -66,20 +64,18 @@ def logout():
 def login():
     error = None
     if request.method == 'POST':
-        # username and password from form
         email = request.form['email']
         password = request.form['password']
 
-        # get password from database
+        #get password from database
         cursor = mysql.connection.cursor()
         cursor.execute("SELECT password FROM members WHERE email = %s", [email])
         dbPass = cursor.fetchall()
 
         # check passwords
         hashpass = hashlib.md5(password.encode('utf-8')).hexdigest()
-        # if passwords match
         if hashpass == dbPass[0][0]:
-            # get more info
+            #get more info
             cursor.execute("SELECT firstname, user_id FROM members WHERE email = %s", [email])
             vals = cursor.fetchall()
             name = vals[0][0]
@@ -150,5 +146,5 @@ def settings():
         if commited:
             for day in days_of_week:
                 for method in methods:
-                    add_new_job(user_id, int(day), utc_deadline, method)
+                    add_new_job(user_id, int(day), utc_deadline, int(method))
     return render_template('settings.html', error=error, name=firstname)
