@@ -38,12 +38,15 @@ def validate_twilio_request(f):
 
         # Validate the request using its URL, POST data,
         # and X-TWILIO-SIGNATURE header
+        scheme=request.headers.get('X-Forwarded-Proto', 'http')
+        host=request.headers.get('x-Frowarded-Host', request.host)
+        full_url=f"{scheme}://{host}{request.path}"
         request_valid = validator.validate(
-            request.url,
+            full_url,
             request.form,
             request.headers.get('X-TWILIO-SIGNATURE', ''))
-
-        #continue processing if request is valid else return a 403 error if
+            
+        #continue processing if request is valid else return a 403 error
         if request_valid or current_app.debug:
             return f(*args, **kwargs)
         else:
