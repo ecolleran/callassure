@@ -95,6 +95,14 @@ def show_jobs():
     return render_template('jobs.html', jobs=job_list)
 
 ### VERIFY & LOG ###
+'''#at scheduled time this fucntion should check if a text has been received
+def confrim_checkin():
+    cursor = mysql.connection.cursor()
+    query=""
+    cursor.execute(query, (user_id,))
+    cursor.close()'''
+
+
 def log_sms_staus():
     if request.method == 'POST':
         body = request.values.get('Body', '')

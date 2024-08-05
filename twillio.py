@@ -11,17 +11,17 @@ from flask import Flask, request, abort, request, url_for, jsonify, current_app
 
 ### TWILIO SETUP ###
 #read secrets from docker as files
-'''def read_secret(secret_name):
+def read_secret(secret_name):
     with open(f"/run/secrets/{secret_name}", "r") as file:
         return file.read().strip()
 
 #docker
 account_sid = read_secret('twilio-sid')
-auth_token = read_secret('twilio-token')'''
+auth_token = read_secret('twilio-token')
 
 #local
-account_sid = os.environ['TWILIO_ACCOUNT_SID']
-auth_token = os.environ['TWILIO_AUTH_TOKEN']
+'''account_sid = os.environ['TWILIO_ACCOUNT_SID']
+auth_token = os.environ['TWILIO_AUTH_TOKEN']'''
 
 client = Client(account_sid, auth_token)
 twilio_number='+14252509408'
