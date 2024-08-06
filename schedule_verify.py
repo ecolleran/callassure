@@ -56,7 +56,7 @@ def schedule_checkins(day):
             job_id = f"{str(member)}-{dayhrmin}-{str(method)}"
             if method==2:
                 scheduler.add_job(send_text, trigger, args=[phonenumber], id=job_id)
-            if method=='1':
+            if method==1:
                 scheduler.add_job(make_call, trigger, args=[phonenumber], id=job_id)
     cursor.close()
 

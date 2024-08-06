@@ -16,12 +16,9 @@ GOOD_BOY_URL = (
 @validate_twilio_request
 def sms_reply():
     """Respond to incoming calls with a simple text message."""
-    # Start our TwiML response
+    #start TwiML response
     resp = MessagingResponse()
-
-    # Add a message
     resp.message("That is great to hear. Thank you for checking in!", action='https://smart-goat-modern.ngrok-free.app/message-status', method='POST')
-
     return str(resp)
 
 @validate_twilio_request
@@ -37,23 +34,6 @@ def image_reply():
         msg = response.message("Thanks for the image. Here's one for you!")
         msg.media(GOOD_BOY_URL)
     return str(response)
-
-@validate_twilio_request
-def incoming_sms():
-    """Send a dynamic reply to an incoming text message"""
-    # Get the message the user sent our Twilio number
-    body = request.values.get('Body', None)
-
-    # Start our TwiML response
-    resp = MessagingResponse()
-
-    # Determine the right reply for this message
-    if body == 'hello':
-        resp.message("Hi!")
-    elif body == 'bye':
-        resp.message("Goodbye")
-
-    return str(resp)
 
 response_messages = {
     '1' : {
@@ -100,4 +80,4 @@ def dynamic_sms():
             status_callback='https://smart-goat-modern.ngrok-free.app/message-status'
         )
 
-    return jsonify({"status": "success"}), 200
+    return body

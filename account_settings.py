@@ -117,9 +117,15 @@ def settings():
         utc_time = local_time.astimezone(pytz.utc)
         utc_deadline = utc_time.strftime('%H:%M:%S') #format for MySQL
         
+        #check if the day changes after converting to UTC
+        day_offset = 0
+        if utc_time.date() > local_time.date():
+            day_offset = 1
+
         cursor = mysql.connection.cursor()
         try:
             for day in days_of_week:
+                day=(int(day) + day_offset - 1) % 7 + 1
                 for method in methods:
                     cursor.execute("""
                     INSERT INTO checkin_schedule(
@@ -145,6 +151,7 @@ def settings():
 
         if commited:
             for day in days_of_week:
+                day=(int(day) + day_offset - 1) % 7 + 1
                 for method in methods:
                     add_new_job(user_id, int(day), utc_deadline, int(method))
     return render_template('settings.html', error=error, name=firstname)

@@ -4,6 +4,7 @@ import schedule
 import time
 import os
 
+import flask
 from functools import wraps
 from twilio.rest import Client
 from twilio.request_validator import RequestValidator
@@ -11,20 +12,23 @@ from flask import Flask, request, abort, request, url_for, jsonify, current_app
 
 ### TWILIO SETUP ###
 #read secrets from docker as files
-def read_secret(secret_name):
+'''def read_secret(secret_name):
     with open(f"/run/secrets/{secret_name}", "r") as file:
         return file.read().strip()
 
 #docker
 account_sid = read_secret('twilio-sid')
-auth_token = read_secret('twilio-token')
+auth_token = read_secret('twilio-token')'''
 
 #local
-'''account_sid = os.environ['TWILIO_ACCOUNT_SID']
-auth_token = os.environ['TWILIO_AUTH_TOKEN']'''
+account_sid = os.environ['TWILIO_ACCOUNT_SID']
+auth_token = os.environ['TWILIO_AUTH_TOKEN']
 
 client = Client(account_sid, auth_token)
 twilio_number='+14252509408'
+
+def send_sid():
+    return account_sid
 
 def get_client():
     return client, twilio_number
@@ -58,7 +62,7 @@ def twiml(resp):
 def send_text(to_text):
     message = client.messages.create(
         from_=twilio_number, 
-        body='Hello from CallAssure. We are checking in with you for today. Send us a 1 if you are okay or a 2 if you would like your family to check-in with you.', 
+        body="Hello from CallAssure. We haven't heard from you today today. Send us a 1 if you are okay or a 2 if you would like your family to check-in with you.", 
         status_callback='https://smart-goat-modern.ngrok-free.app/message-status',
         provide_feedback=True,
         messaging_service_sid='MGe6e6b3eed7d69cfda67f4b83e4b837a5',

@@ -5,10 +5,10 @@ from twilio.twiml.messaging_response import MessagingResponse
 from account_settings import *
 from calls import *
 from schedule_verify import *
-#from schedule_verify import scheduler, schedule_checkins
 from sql_connection import get_app
 from texts import *
 from twillio import *
+from sync import *
 
 from datetime import datetime
 
@@ -27,13 +27,17 @@ app.add_url_rule('/logout', view_func=logout)
 app.add_url_rule('/message-status', methods=['GET','POST'], view_func=log_sms_staus)
 app.add_url_rule('/confirm', methods=['GET'], view_func=confirm_sms)
 app.add_url_rule('/jobs', methods=['GET'], view_func=show_jobs)
+#sync
+app.add_url_rule('/handle-sms', methods=['GET','POST'], view_func=handle_sms)
+app.add_url_rule('/generate-sync-token', methods=['GET'], view_func=generate_sync_token) 
+app.add_url_rule('/sync', methods=['GET','POST'], view_func=sync_page)
 
 #text responses
 app.add_url_rule('/sms', methods=['GET', 'POST'], view_func=dynamic_sms)
 app.add_url_rule('/image', methods=['GET', 'POST'], view_func=image_reply)
-app.add_url_rule('/dynamic-sms', methods=['GET', 'POST'], view_func=incoming_sms)
 
 #phone call roadmap urls
+app.add_url_rule('/called', methods=['GET', 'POST'], view_func=user_calls_us)
 app.add_url_rule('/call/welcome', methods=['POST'], view_func=welcome)
 app.add_url_rule('/call/menu', methods=['POST'], view_func=menu)
 app.add_url_rule('/call/related-member', methods=['POST'], view_func=related_member)
