@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Runtime + Sync = 🚀!</title>
+    <style>
+      body {
+        font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI',
+          Roboto, 'Helvetica Neue', Arial, sans-serif;
+        color: #0d122b;
+        border-top: 5px solid #f22f46;
+      }
+      main {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      a {
+        color: #008cff;
+      }
+      footer {
+        margin: 0 auto;
+        max-width: 800px;
+        text-align: center;
+      }
+      footer p {
+        border-top: 1px solid rgba(148, 151, 155, 0.2);
+        padding-top: 2em;
+        margin: 0 2em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Ahoy there!</h1>
+      <p>This is an example of a simple web app hosted by Twilio Runtime.</p>
+      <p>
+        It fetches a Sync access token from a serverless Twilio Function,
+        renders any existing messages from a Sync List, and displays incoming
+        messages as you text them to your Twilio phone number.
+      </p>
+      <h2>Messages:</h2>
+      <div id="loading-message">Loading Messages...</div>
+      <ul id="messages-list"></ul>
+    </main>
+    <footer>
+      <p>
+        Made with 💖 by your friends at
+        <a href="https://www.twilio.com">Twilio</a>
+      </p>
+    </footer>
+  </body>
+  <!-- Included the Twilio Sync SDK -->
+  <script
+    type="text/javascript"
+    src="//media.twiliocdn.com/sdk/js/sync/v3.0/twilio-sync.min.js"
+  ></script>
+  <script>
+    window.addEventListener('load', async () => {
+      const messagesList = document.getElementById('messages-list');
+      const loadingMessage = document.getElementById('loading-message');
+
+      try {
+        const response = await fetch('/generate-sync-token');
+        const { syncListName, token } = await response.json();
+        const syncClient = new Twilio.Sync.Client(token);
+        
+        // Fetch a reference to the messages Sync List
+        const syncList = await syncClient.list(syncListName);
+        
+        // Get the most recent messages (if any) in the List
+        const existingMessageItems = await syncList.getItems({ order: 'desc' });
+        
+        // Hide the loading message
+        loadingMessage.style.display = 'none';
+        
+        // Render any existing messages to the page, remember to reverse the order
+        // since they're fetched in descending order in this case
+        messagesList.innerHTML = existingMessageItems.items
+          .reverse()
+          .map((item) => `<li>${item.data.message}</li>`)
+          .join('');
+        
+        // Add an event listener to the List so that incoming messages can
+        // be displayed in real-time
+        syncList.on('itemAdded', ({ item }) => {
+          console.log('Item added:', item);
+          // Add the new message to the list by adding a new <li> element
+          // containing the incoming message's text
+          const newListItem = document.createElement('li');
+          newListItem.innerText = item.data.message;
+          messagesList.appendChild(newListItem);
+        });
+
+        // Make sure to refresh the access token before it expires for an uninterrupted experience!
+        syncClient.on('tokenAboutToExpire', async () => {
+          try {
+            // Refresh the access token and update the Sync client
+            const refreshResponse = await fetch('/generate-sync-token');
+            const refreshAccess = await refreshResponse.json();
+            syncClient.updateToken(refreshAccess.token);
+          } catch (error) {
+            console.error(error);
+            loadingMessage.innerText =
+              'Unable to refresh access to messages 😭, try reloading your page!';
+            loadingMessage.style.color = 'red';
+            loadingMessage.style.fontWeight = 'bold';
+          }
+        });
+      } catch (error) {
+        console.error(error);
+        loadingMessage.innerText = 'Unable to load messages 😭';
+        loadingMessage.style.color = 'red';
+        loadingMessage.style.fontWeight = 'bold';
+      }
+    });
+  </script>
+</html>

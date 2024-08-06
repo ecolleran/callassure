@@ -6,6 +6,12 @@ from twilio.twiml.voice_response import VoiceResponse
 client, twilio_number = get_client()
 
 @validate_twilio_request
+def user_calls_us():
+    response=VoiceResponse()
+    response.say("     Thank you for calling us at CallAssure to check-in today. ")
+    return twiml(response)
+
+@validate_twilio_request
 def welcome():
     response = VoiceResponse()
     with response.gather(
@@ -13,7 +19,7 @@ def welcome():
     ) as g:
         g.say(message="      Good morning from Call Assure. We are checking-in with you for today. " +
               "Please press 1 if you are okay. " +
-              "or Press 2 if you would like a family member to contact you. ", loop=3)
+              "or Press 2 if you would like to contact a family member. ", loop=3)
     return twiml(response)
 
 def menu():
