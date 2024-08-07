@@ -18,6 +18,9 @@ services:
       - MYSQL_ROOT_PASSWORD=/run/secrets/db-password
       - TWILIO_ACCOUNT_SID=/run/secrets/twilio-sid
       - TWILIO_AUTH_TOKEN=/run/secrets/twilio-token
+      - TWILIO_API_KEY=/run/secrets/twilio-api
+      - TWILIO_API_SECRET=/run/secrets/twilio-api-secret
+      - TWILIO_SERVICE_SID=/run/secrets/service-sid
     depends_on:
       db:
         condition: service_healthy
@@ -25,6 +28,9 @@ services:
       - db-password
       - twilio-sid
       - twilio-token
+      - twilio-api
+      - twilio-api-secret
+      - service-sid
 
 # The section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
@@ -69,3 +75,9 @@ secrets:
     file: db/sid.txt
   twilio-token:
     file: db/auth.txt
+  twilio-api:
+    file: db/api.txt
+  twilio-api-secret:
+    file: db/secret.txt
+  service-sid:
+    file: db/service.txt

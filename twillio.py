@@ -10,25 +10,28 @@ from twilio.jwt.access_token.grants import SyncGrant
 
 ### TWILIO SETUP ###
 #read secrets from docker as files
-'''def read_secret(secret_name):
+def read_secret(secret_name):
     with open(f"/run/secrets/{secret_name}", "r") as file:
+        print(file.read().strip())
         return file.read().strip()
 
 #docker
 account_sid = read_secret('twilio-sid')
-auth_token = read_secret('twilio-token')'''
+auth_token = read_secret('twilio-token')
+api_key = read_secret('twilio-api')
+api_secret = read_secret('twilio-api-secret')
+service_sid = read_secret('service-sid')
 
 #local
-account_sid = os.environ['TWILIO_ACCOUNT_SID']
+'''account_sid = os.environ['TWILIO_ACCOUNT_SID']
 auth_token = os.environ['TWILIO_AUTH_TOKEN']
-
-api_key = os.environ.get('TWILIO_API_KEY')
-api_secret = os.environ.get('TWILIO_API_SECRET')
+api_key = os.environ['TWILIO_API_KEY']
+api_secret = os.environ['TWILIO_API_SECRET']
+service_sid = os.environ['TWILIO_SERVICE_SID']'''
 
 client = Client(account_sid, auth_token)
 
 twilio_number='+14252509408'
-service_sid = 'IS14e6b6497695f1fbad7200c0294bc8c1'
 sync_list_name = 'message-bodies'
 
 def get_client():
@@ -41,13 +44,14 @@ def validate_twilio_request(f):
     """Validates that incoming requests genuinely originated from Twilio"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        #instance RequestValidator class
         validator = RequestValidator(auth_token)
 
-        # Validate the request using its URL, POST data,
-        # and X-TWILIO-SIGNATURE header
+        #extract original URL from X-Forwarded add headers if present
+        scheme = request.headers.get('X-Forwarded-Proto', 'http') # Default to 'http' if header is absent
+        host = request.headers.get('X-Forwarded-Host', request.host)
+        full_url = f"{scheme}://{host}{request.path}"
         request_valid = validator.validate(
-            request.url,
+            full_url,
             request.form,
             request.headers.get('X-TWILIO-SIGNATURE', ''))
 
