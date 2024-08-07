@@ -1,14 +1,12 @@
-#!/usr/bin/env python3
-import requests
-import schedule
-import time
 import os
-
-import flask
 from functools import wraps
+import flask
+from flask import Flask, request, abort, request, url_for, jsonify, current_app
+
 from twilio.rest import Client
 from twilio.request_validator import RequestValidator
-from flask import Flask, request, abort, request, url_for, jsonify, current_app
+from twilio.jwt.access_token import AccessToken
+from twilio.jwt.access_token.grants import SyncGrant
 
 ### TWILIO SETUP ###
 #read secrets from docker as files
@@ -24,14 +22,20 @@ auth_token = read_secret('twilio-token')'''
 account_sid = os.environ['TWILIO_ACCOUNT_SID']
 auth_token = os.environ['TWILIO_AUTH_TOKEN']
 
-client = Client(account_sid, auth_token)
-twilio_number='+14252509408'
+api_key = os.environ.get('TWILIO_API_KEY')
+api_secret = os.environ.get('TWILIO_API_SECRET')
 
-def send_sid():
-    return account_sid
+client = Client(account_sid, auth_token)
+
+twilio_number='+14252509408'
+service_sid = 'IS14e6b6497695f1fbad7200c0294bc8c1'
+sync_list_name = 'message-bodies'
 
 def get_client():
     return client, twilio_number
+
+def get_sync():
+    return api_key, api_secret, service_sid, sync_list_name
 
 def validate_twilio_request(f):
     """Validates that incoming requests genuinely originated from Twilio"""
@@ -42,15 +46,12 @@ def validate_twilio_request(f):
 
         # Validate the request using its URL, POST data,
         # and X-TWILIO-SIGNATURE header
-        scheme=request.headers.get('X-Forwarded-Proto', 'http')
-        host=request.headers.get('x-Frowarded-Host', request.host)
-        full_url=f"{scheme}://{host}{request.path}"
         request_valid = validator.validate(
-            full_url,
+            request.url,
             request.form,
             request.headers.get('X-TWILIO-SIGNATURE', ''))
-            
-        #continue processing if request is valid else return a 403 error
+
+        #continue processing if request is valid else return a 403 error if
         if request_valid or current_app.debug:
             return f(*args, **kwargs)
         else:
@@ -61,6 +62,19 @@ def twiml(resp):
     resp = flask.Response(str(resp))
     resp.headers['Content-Type'] = 'text/xml'
     return resp
+
+def generate_sync_token():
+    sync_grant = SyncGrant(service_sid=service_sid)
+    token = AccessToken(account_sid, api_key, api_secret, identity='emily-admin')
+    token.add_grant(sync_grant)
+
+    response = {
+        'syncListName': sync_list_name,
+        'token': token.to_jwt() }
+    return jsonify(response)
+
+def get_sync_list():
+    sync_list = client.sync.services(service_sid).sync_lists(sync_list_name).fetch()
 
 def send_text(to_text):
     message = client.messages.create(

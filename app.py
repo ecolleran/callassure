@@ -8,7 +8,6 @@ from schedule_verify import *
 from sql_connection import get_app
 from texts import *
 from twillio import *
-from sync import *
 
 from datetime import datetime
 
@@ -28,9 +27,7 @@ app.add_url_rule('/message-status', methods=['GET','POST'], view_func=log_sms_st
 app.add_url_rule('/confirm', methods=['GET'], view_func=confirm_sms)
 app.add_url_rule('/jobs', methods=['GET'], view_func=show_jobs)
 #sync
-app.add_url_rule('/handle-sms', methods=['GET','POST'], view_func=handle_sms)
-app.add_url_rule('/generate-sync-token', methods=['GET'], view_func=generate_sync_token) 
-app.add_url_rule('/sync', methods=['GET','POST'], view_func=sync_page)
+app.add_url_rule('/generate-sync-token', methods=['GET'], view_func=generate_sync_token)
 
 #text responses
 app.add_url_rule('/sms', methods=['GET', 'POST'], view_func=dynamic_sms)
@@ -47,7 +44,7 @@ app.add_url_rule('/call/related-member', methods=['POST'], view_func=related_mem
 with app.app_context():
   scheduler.start()
   for day in range(1, 8):
-    schedule_checkins(day)
+    schedule_from_db(day)
 
 ### MAIN ###
 if __name__ == "__main__":

@@ -24,32 +24,132 @@
         }
         th {
             background-color: #f2f2f2;
+            cursor: pointer;
+        }
+        th.sort-asc::after {
+            content: " ▲";
+        }
+        th.sort-desc::after {
+            content: " ▼";
+        }
+        input[type="text"] {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
         }
     </style>
 </head>
 <body>
     <h1>Message Status</h1>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>To</th>
-            <th>From</th>
-            <th>Body</th>
-            <th>Message SID</th>
-            <th>Message Status</th>
-            <th>Timestamp</th>
-        </tr>
-        {% for log in logs %}
-        <tr>
-            <td>{{ log.id }}</td>
-            <td>{{ log.to }}</td>
-            <td>{{ log.from }}</td>
-            <td>{{ log.body }}</td>
-            <td>{{ log.message_sid }}</td>
-            <td>{{ log.message_status }}</td>
-            <td>{{ log.timestamp }}</td>
-        </tr>
-        {% endfor %}
+    <label for="filter-to">Filter by "To":</label>
+    <input type="text" id="filter-to" onkeyup="filterTable('to')" placeholder="Filter by 'To' number..">
+
+    <label for="filter-from">Filter by "From":</label>
+    <input type="text" id="filter-from" onkeyup="filterTable('from')" placeholder="Filter by 'From' number..">
+
+    <table id="messageTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">ID</th>
+                <th onclick="sortTable(1)">To</th>
+                <th onclick="sortTable(2)">From</th>
+                <th>Body</th>
+                <th>Message SID</th>
+                <th>Message Status</th>
+                <th onclick="sortTable(6)">Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.to }}</td>
+                <td>{{ log.from }}</td>
+                <td>{{ log.body }}</td>
+                <td>{{ log.message_sid }}</td>
+                <td>{{ log.message_status }}</td>
+                <td>{{ log.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
+
+    <script>
+        function filterTable(column) {
+            var input, filter, table, tr, td, i, j, txtValue;
+            if (column === 'to') {
+                input = document.getElementById("filter-to");
+            } else {
+                input = document.getElementById("filter-from");
+            }
+            filter = input.value.toUpperCase();
+            table = document.getElementById("messageTable");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 1; i < tr.length; i++) {
+                tr[i].style.display = "none";
+                td = tr[i].getElementsByTagName("td");
+                for (j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        if (column === 'to' && j == 1 || column === 'from' && j == 2) {
+                            txtValue = td[j].textContent || td[j].innerText;
+                            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                tr[i].style.display = "";
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function sortTable(n) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.getElementById("messageTable");
+            switching = true;
+            dir = "asc";
+
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    if (dir == "asc") {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+            var headers = table.getElementsByTagName("TH");
+            for (i = 0; i < headers.length; i++) {
+                headers[i].classList.remove('sort-asc', 'sort-desc');
+            }
+            if (dir == "asc") {
+                headers[n].classList.add('sort-asc');
+            } else {
+                headers[n].classList.add('sort-desc');
+            }
+        }
+    </script>
 </body>
 </html>

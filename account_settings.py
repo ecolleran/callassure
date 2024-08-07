@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, session, redirect, url_for, f
 from login_required_wrapper import login_required
 import hashlib
 from sql_connection import get_connection
-from schedule_verify import add_new_job
+from schedule_verify import schedule
 import MySQLdb
 
 import pytz
@@ -153,5 +153,8 @@ def settings():
             for day in days_of_week:
                 day=(int(day) + day_offset - 1) % 7 + 1
                 for method in methods:
-                    add_new_job(user_id, int(day), utc_deadline, int(method))
+                    deadline_split=deadline.split(":")
+                    hour = int(deadline_split[0])
+                    minute = int(deadline_split[1])
+                    schedule(user_id, int(day), hour, minute, int(method))
     return render_template('settings.html', error=error, name=firstname)

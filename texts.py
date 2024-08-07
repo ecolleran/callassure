@@ -5,8 +5,9 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twillio import *
 
 #sql cursor from sql_connection for queries
-mysql = get_connection()
-client, twilio_number = get_client()
+mysql=get_connection()
+client, twilio_number=get_client()
+api_key, api_secret, service_sid, sync_list_name=get_sync()
 
 ### RESPONSES ###
 GOOD_BOY_URL = (
@@ -47,18 +48,31 @@ default_message = "I'm not quite sure I understand that response. If you could u
 
 @validate_twilio_request
 def dynamic_sms():
-    #reading and formatting incoming message
+    #reading incoming message values
+    print("incoming message recieved.")
+    print()
     body = request.values.get('Body', '')
-    print(body)
+    message_sid = request.values.get('MessageSid', None)
     to = request.values.get('From', '')
     from_ = request.values.get('To', '')
+
+    #log incoming message into database
+    cursor = mysql.connection.cursor()
+    cursor.execute("""
+        INSERT INTO message_logs (`to`, `from`, `body`, `message_sid`, `message_status`)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (from_[2:], to[2:], body, message_sid, 'incoming'))
+    mysql.connection.commit()
+    cursor.close()
+
+    #format message to parse for key words
     msg_recieved = ''.join(e for e in body if e.isalnum())
     msg_recieved = msg_recieved.strip().lower()
 
-    # Default message is sent unless key word is found in following loop
+    #default message sent unless key word found
     send_default = True
 
-    # Choose the correct message response and set default to false
+    #select correct message response
     for keyword, messages in response_messages.items():
         if keyword == msg_recieved:
             body = messages['body']
@@ -66,18 +80,31 @@ def dynamic_sms():
             break
 
     if send_default:
-        client.messages.create(
+        response = client.messages.create(
             body=default_message,
             from_=from_,
             to=to,
             status_callback='https://smart-goat-modern.ngrok-free.app/message-status'
         )
     else:
-        client.messages.create(
+        response = client.messages.create(
             body=body,
             from_=from_,
             to=to,
             status_callback='https://smart-goat-modern.ngrok-free.app/message-status'
         )
+    print("sending response message...")
+    print()
 
+    #append body & id of response to sync list
+    #will access later when message delivery is confirmed
+    client.sync.services(service_sid).sync_lists(sync_list_name).sync_list_items.create(
+        data={'message': body, 'message_sid': response.sid} )
     return body
+
+def get_sync_list_item(message_sid):
+    sync_list = client.sync.services(service_sid).sync_lists(sync_list_name).sync_list_items.list(order='desc')
+    for item in sync_list:
+        if item.data['message_sid'] == message_sid:
+            print('retrieving response message body...')
+            return item.data['message']
