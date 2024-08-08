@@ -153,7 +153,7 @@ def settings():
             for day in days_of_week:
                 day=(int(day) + day_offset - 1) % 7 + 1
                 for method in methods:
-                    deadline_split=deadline.split(":")
+                    deadline_split=utc_deadline.split(":")
                     hour = int(deadline_split[0])
                     minute = int(deadline_split[1])
                     schedule(user_id, int(day), hour, minute, int(method))

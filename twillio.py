@@ -10,7 +10,7 @@ from twilio.jwt.access_token.grants import SyncGrant
 
 ### TWILIO SETUP ###
 #read secrets from docker as files
-def read_secret(secret_name):
+'''def read_secret(secret_name):
     with open(f"/run/secrets/{secret_name}", "r") as file:
         print(file.read().strip())
         return file.read().strip()
@@ -20,14 +20,14 @@ account_sid = read_secret('twilio-sid')
 auth_token = read_secret('twilio-token')
 api_key = read_secret('twilio-api')
 api_secret = read_secret('twilio-api-secret')
-service_sid = read_secret('service-sid')
+service_sid = read_secret('service-sid')'''
 
 #local
-'''account_sid = os.environ['TWILIO_ACCOUNT_SID']
+account_sid = os.environ['TWILIO_ACCOUNT_SID']
 auth_token = os.environ['TWILIO_AUTH_TOKEN']
 api_key = os.environ['TWILIO_API_KEY']
 api_secret = os.environ['TWILIO_API_SECRET']
-service_sid = os.environ['TWILIO_SERVICE_SID']'''
+service_sid = os.environ['TWILIO_SERVICE_SID']
 
 client = Client(account_sid, auth_token)
 
@@ -38,7 +38,7 @@ def get_client():
     return client, twilio_number
 
 def get_sync():
-    return api_key, api_secret, service_sid, sync_list_name
+    return service_sid, sync_list_name
 
 def validate_twilio_request(f):
     """Validates that incoming requests genuinely originated from Twilio"""
@@ -46,7 +46,7 @@ def validate_twilio_request(f):
     def decorated_function(*args, **kwargs):
         validator = RequestValidator(auth_token)
 
-        #extract original URL from X-Forwarded add headers if present
+        #extract original URL from X-Forwarded-* headers if present
         scheme = request.headers.get('X-Forwarded-Proto', 'http') # Default to 'http' if header is absent
         host = request.headers.get('X-Forwarded-Host', request.host)
         full_url = f"{scheme}://{host}{request.path}"
@@ -56,9 +56,10 @@ def validate_twilio_request(f):
             request.headers.get('X-TWILIO-SIGNATURE', ''))
 
         #continue processing if request is valid else return a 403 error if
-        if request_valid or current_app.debug:
+        if request_valid:
             return f(*args, **kwargs)
         else:
+            print("verification issue. aborting message delivery")
             return abort(403)
     return decorated_function
 
@@ -81,15 +82,18 @@ def get_sync_list():
     sync_list = client.sync.services(service_sid).sync_lists(sync_list_name).fetch()
 
 def send_text(to_text):
+    body="Hello from CallAssure. We haven't heard from you today. Send us a 1 if you are okay or a 2 if you would like your family to check-in with you."
     message = client.messages.create(
         from_=twilio_number, 
-        body="Hello from CallAssure. We haven't heard from you today today. Send us a 1 if you are okay or a 2 if you would like your family to check-in with you.", 
+        body=body, 
         status_callback='https://smart-goat-modern.ngrok-free.app/message-status',
         provide_feedback=True,
         messaging_service_sid='MGe6e6b3eed7d69cfda67f4b83e4b837a5',
         to=to_text)
     print()
     print(f'Message sent to {to_text}, SID:{message.sid}')
+    client.sync.services(service_sid).sync_lists(sync_list_name).sync_list_items.create(
+        data={'message': body, 'message_sid': message.sid} )
 
 def make_call(to_call):
     call = client.calls.create(

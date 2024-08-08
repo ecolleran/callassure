@@ -7,7 +7,7 @@ from twillio import *
 #sql cursor from sql_connection for queries
 mysql=get_connection()
 client, twilio_number=get_client()
-api_key, api_secret, service_sid, sync_list_name=get_sync()
+service_sid, sync_list_name=get_sync()
 
 ### RESPONSES ###
 GOOD_BOY_URL = (
@@ -84,14 +84,16 @@ def dynamic_sms():
             body=default_message,
             from_=from_,
             to=to,
-            status_callback='https://smart-goat-modern.ngrok-free.app/message-status'
+            status_callback='https://smart-goat-modern.ngrok-free.app/message-status',
+            messaging_service_sid='MGe6e6b3eed7d69cfda67f4b83e4b837a5'
         )
     else:
         response = client.messages.create(
             body=body,
             from_=from_,
             to=to,
-            status_callback='https://smart-goat-modern.ngrok-free.app/message-status'
+            status_callback='https://smart-goat-modern.ngrok-free.app/message-status',
+            messaging_service_sid='MGe6e6b3eed7d69cfda67f4b83e4b837a5'
         )
     print("sending response message...")
     print()
