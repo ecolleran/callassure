@@ -1,12 +1,10 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify
-from login_required_wrapper import login_required
 import hashlib
-from sql_connection import get_connection
-from schedule_verify import schedule
 import MySQLdb
 
-import pytz
-from datetime import datetime
+from sql_connection import get_connection
+from schedule_verify import schedule
+from utils import *
 
 #sql cursor from sql_connection for queries
 mysql = get_connection()
@@ -28,12 +26,9 @@ def register():
         # try to insert into database (throws errors as needed)
         cursor = mysql.connection.cursor()
         try:
-            cursor.execute("""
-            INSERT INTO members(
-                firstname, lastname, email, password, phonenumber, paymentplan
-                ) VALUES (
-                    %s, %s, %s, MD5(%s), %s, %s
-                )""", 
+            cursor.execute("""INSERT INTO members(
+                firstname, lastname, email, password, phonenumber, paymentplan)
+                VALUES (%s, %s, %s, MD5(%s), %s, %s)""", 
                 [firstname, lastname, email, password, phonenumber, 1])
             flash('Account created!')
             return redirect(url_for('login'))
@@ -50,7 +45,19 @@ def register():
         # close connection
         mysql.connection.commit()
         cursor.close()
+        new_user_added(email)
     return render_template('register.html', error=error)
+
+def new_user_added(email):
+    '''series of house keeping tasks when a new user is added(user status & midnight updates)'''
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT user_id FROM members WHERE email = %s", [email])
+    member_id = cursor.fetchall()
+    member_id = member_id[0][0]
+
+    cursor.execute("INSERT INTO member_status(member_id, status) VALUES (%s, %s)", [member_id, 1])
+    mysql.connection.commit()
+    cursor.close()
 
 @login_required
 def logout():
@@ -106,33 +113,16 @@ def settings():
         methods = request.form.getlist('checkin_method')
         timezone_str = request.form['timezone']
         
-        #get current date to change tz
-        today = datetime.now().date()
-        local_time_str = f"{today} {deadline}"
-        local_time = datetime.strptime(local_time_str, '%Y-%m-%d %H:%M')
-        
-        #convert deadline to UTC
-        local_tz = pytz.timezone(timezone_str)
-        local_time = local_tz.localize(local_time)
-        utc_time = local_time.astimezone(pytz.utc)
-        utc_deadline = utc_time.strftime('%H:%M:%S') #format for MySQL
-        
-        #check if the day changes after converting to UTC
-        day_offset = 0
-        if utc_time.date() > local_time.date():
-            day_offset = 1
+        utc_deadline, day_offset=change_to_utc(timezone_str, deadline)
 
         cursor = mysql.connection.cursor()
         try:
             for day in days_of_week:
                 day=(int(day) + day_offset - 1) % 7 + 1
                 for method in methods:
-                    cursor.execute("""
-                    INSERT INTO checkin_schedule(
+                    cursor.execute("""INSERT INTO checkin_schedule(
                         member_id, dayofweek, utc_deadline, original_timezone, method_id
-                    ) VALUES (
-                        %s, %s, %s, %s, %s
-                    )""",
+                    ) VALUES (%s, %s, %s, %s, %s)""",
                     [user_id, day, utc_deadline, timezone_str, method])
             mysql.connection.commit()
             commited = True

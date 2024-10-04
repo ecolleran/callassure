@@ -1,22 +1,16 @@
 import os
 from functools import wraps
 import flask
-from flask import Flask, request, abort, request, url_for, jsonify, current_app
+from flask import Flask, request, abort, url_for, jsonify
 
 from twilio.rest import Client
-from twilio.request_validator import RequestValidator
 from twilio.jwt.access_token import AccessToken
 from twilio.jwt.access_token.grants import SyncGrant
+from utils import *
 
 ### TWILIO SETUP ###
-#read secrets from docker as files
-'''def read_secret(secret_name):
-    with open(f"/run/secrets/{secret_name}", "r") as file:
-        print(file.read().strip())
-        return file.read().strip()
-
 #docker
-account_sid = read_secret('twilio-sid')
+'''account_sid = read_secret('twilio-sid')
 auth_token = read_secret('twilio-token')
 api_key = read_secret('twilio-api')
 api_secret = read_secret('twilio-api-secret')
@@ -30,7 +24,6 @@ api_secret = os.environ['TWILIO_API_SECRET']
 service_sid = os.environ['TWILIO_SERVICE_SID']
 
 client = Client(account_sid, auth_token)
-
 twilio_number='+14252509408'
 sync_list_name = 'message-bodies'
 
@@ -39,34 +32,6 @@ def get_client():
 
 def get_sync():
     return service_sid, sync_list_name
-
-def validate_twilio_request(f):
-    """Validates that incoming requests genuinely originated from Twilio"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        validator = RequestValidator(auth_token)
-
-        #extract original URL from X-Forwarded-* headers if present
-        scheme = request.headers.get('X-Forwarded-Proto', 'http') # Default to 'http' if header is absent
-        host = request.headers.get('X-Forwarded-Host', request.host)
-        full_url = f"{scheme}://{host}{request.path}"
-        request_valid = validator.validate(
-            full_url,
-            request.form,
-            request.headers.get('X-TWILIO-SIGNATURE', ''))
-
-        #continue processing if request is valid else return a 403 error if
-        if request_valid:
-            return f(*args, **kwargs)
-        else:
-            print("verification issue. aborting message delivery")
-            return abort(403)
-    return decorated_function
-
-def twiml(resp):
-    resp = flask.Response(str(resp))
-    resp.headers['Content-Type'] = 'text/xml'
-    return resp
 
 def generate_sync_token():
     sync_grant = SyncGrant(service_sid=service_sid)
@@ -90,7 +55,6 @@ def send_text(to_text):
         provide_feedback=True,
         messaging_service_sid='MGe6e6b3eed7d69cfda67f4b83e4b837a5',
         to=to_text)
-    print()
     print(f'Message sent to {to_text}, SID:{message.sid}')
     client.sync.services(service_sid).sync_lists(sync_list_name).sync_list_items.create(
         data={'message': body, 'message_sid': message.sid} )

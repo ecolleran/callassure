@@ -2,16 +2,12 @@ from flask import Flask, render_template, request, session, redirect, url_for, f
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from login_required_wrapper import login_required
 from sql_connection import get_connection
-from twilio.twiml.messaging_response import MessagingResponse
-from twillio import *
 import json
 from MySQLdb.cursors import DictCursor
-from datetime import datetime
-import uuid
 from calls import *
 from texts import *
+from utils import *
 
 ### SCEDULER & LOGGING ###
 #logging.basicConfig(level=logging.DEBUG)
@@ -23,11 +19,9 @@ mysql = get_connection()
 ### SCHEDULE ###
 def fetch_times(day):
     cursor = mysql.connection.cursor()
-    
     query= "select distinct utc_deadline from checkin_schedule where dayofweek=%s;"
     cursor.execute(query, (day,))
     times = cursor.fetchall()
-    
     cursor.close()
     return times
 
@@ -39,7 +33,8 @@ def schedule_from_db(day):
         hour = int(total_seconds // 3600)
         minute = int((total_seconds % 3600) // 60)
 
-        query="select member_id, method_id, utc_deadline from checkin_schedule where dayofweek=%s and utc_deadline=%s order by method_id;"
+        query='''select member_id, method_id, utc_deadline from checkin_schedule 
+            where dayofweek=%s and utc_deadline=%s order by method_id;'''
         cursor.execute(query, (day, time[0],))
         checkins = cursor.fetchall()
 
@@ -80,12 +75,56 @@ def show_jobs():
     return render_template('jobs.html', jobs=job_list)
 
 ### VERIFY & LOG ###
-'''#at scheduled time this fucntion should check if a text has been received
-def confrim_checkin():
+#at scheduled time this fucntion should check if a text has been received
+def confrim_checkin(member_id, phonenumber, method):
     cursor = mysql.connection.cursor()
-    query=""
-    cursor.execute(query, (user_id,))
-    cursor.close()'''
+    query="select status from member_status where member_id=%s;"
+    cursor.execute(query, (member_id,))
+    cursor.close()
+    status = cursor.fetchall()
+    if status[0][0]==1:
+        if method==2:
+            send_text(phonenumber)
+        if method==1:
+            make_call(phonenumber)
+    if status[0][0]==2:
+        pass
+        #text family members
+    if status[0][0]==3:
+        pass
+        #some higher level alert
+    if status[0][0]==4:
+        print()
+        print(f'User {member_id} has already checked in today!')
+
+def set_user_midnight():
+    '''find 12:00 AM for each user based on timezone'''
+    cursor = mysql.connection.cursor()
+    query='''SELECT original_timezone,
+        GROUP_CONCAT(DISTINCT member_id ORDER BY member_id ASC) AS member_ids
+        FROM checkin_schedule GROUP BY original_timezone ORDER BY original_timezone;'''
+    cursor.execute(query)
+    #[x][0] is timezone, [x][1] is member_ids
+    timezones = cursor.fetchall()
+    cursor.close()
+    for zone in timezones:
+        utc_deadline, day_offset=change_to_utc(zone[0], '00:00')
+        member_list=zone[1]
+        deadline_split=utc_deadline.split(":")
+        hour = int(deadline_split[0])
+        minute = int(deadline_split[1])
+        trigger = CronTrigger(hour=hour, minute=minute, timezone="UTC")
+        job_id = f"{zone[0]}-midnight-reset"
+        scheduler.add_job(reset_user_status, trigger, args=[member_list], id=job_id)
+
+def reset_user_status(id_list):
+    '''every day at 12:00 AM, by timezone, reset user status to not checked in'''
+    id_str = ', '.join(map(str, id_list)) #format string for MySQL
+    cursor = mysql.connection.cursor()
+    query="update member_status set status=1 where member_id in ({id_str});"
+    cursor.execute(query)
+    mysql.connection.commit()
+    cursor.close()
 
 def log_sms_staus():
     if request.method == 'POST':
@@ -102,7 +141,7 @@ def log_sms_staus():
             cursor.execute("""
                 INSERT INTO message_logs (`to`, `from`, `body`, `message_sid`, `message_status`)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (to, from_, body, message_sid, message_status))
+                """, (to, from_, body, message_sid, message_status))
             mysql.connection.commit()
             cursor.close()
             print("response message logged")

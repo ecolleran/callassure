@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify
-from login_required_wrapper import login_required
 from sql_connection import get_connection
 from twilio.twiml.messaging_response import MessagingResponse
 from twillio import *
+from utils import *
+from datetime import datetime
 
 #sql cursor from sql_connection for queries
 mysql=get_connection()
@@ -76,6 +77,10 @@ def dynamic_sms():
     for keyword, messages in response_messages.items():
         if keyword == msg_recieved:
             body = messages['body']
+            if keyword == '1':
+                current_day = datetime.now().strftime('%A')
+                body = body.replace('[day]', current_day)
+
             send_default = False
             break
 

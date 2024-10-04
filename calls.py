@@ -1,7 +1,7 @@
-import flask
-from flask import flash, render_template, redirect, request, session, url_for, request
-from twillio import *
+from flask import Flask, flash, render_template, redirect, request, session, url_for, request
 from twilio.twiml.voice_response import VoiceResponse
+from twillio import *
+from utils import *
 
 client, twilio_number = get_client()
 

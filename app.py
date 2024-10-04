@@ -9,8 +9,6 @@ from sql_connection import get_app
 from texts import *
 from twillio import *
 
-from datetime import datetime
-
 #get app from sql_connection
 app = get_app()
 
@@ -45,6 +43,11 @@ with app.app_context():
   scheduler.start()
   for day in range(1, 8):
     schedule_from_db(day)
+  '''#reset user status every day at midnight, actualy idk if that goes here hmmmmm
+  trigger = CronTrigger(day_of_week=day, hour=hour, minute=minute, timezone="UTC")
+  job_id = f"{str(member_id)}-{dayhrmin}-{str(method)}"
+  scheduler.add_job(reset_user_status, trigger, args=[phonenumber], id=job_id)'''
+  set_user_midnight()
 
 ### MAIN ###
 if __name__ == "__main__":
