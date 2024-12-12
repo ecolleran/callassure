@@ -101,6 +101,70 @@ def login():
     return render_template('login.html', error=error)
 
 @login_required
+def add_remove_checkin():
+    error = None
+    commited = False
+    data=request.json
+    
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    if request.method == 'POST':
+        action = data.get('action')
+        user_id = session['user_id']
+        deadline = data.get('checkin')
+        days_of_week = data.get('days')
+        methods = data.get('checkin_method')
+        timezone_str = data.get('timezone')
+
+        utc_deadline, day_offset=change_to_utc(timezone_str, deadline)
+
+        cursor = mysql.connection.cursor()
+        try:
+            if action == "add":
+                for day in days_of_week:
+                    day=(int(day) + day_offset - 1) % 7 + 1
+                    for method in methods:
+                        cursor.execute("""INSERT INTO checkin_schedule(
+                            member_id, dayofweek, utc_deadline, original_timezone, method_id
+                        ) VALUES (%s, %s, %s, %s, %s)""",
+                        [user_id, day, utc_deadline, timezone_str, method])
+                mysql.connection.commit()
+                commited = True
+                flash('Check-ins Registered!')
+            
+            elif action == "remove":
+                for day in days_of_week:
+                    day=(int(day) + day_offset - 1) % 7 + 1
+                    for method in methods:
+                        cursor.execute("""DELETE FROM checkin_schedule
+                            WHERE member_id = %s AND dayofweek = %s AND utc_deadline = %s AND method_id = %s""",
+                            [user_id, day, utc_deadline, method])
+                mysql.connection.commit()
+                commited = True
+                flash('Check-ins Removed.')
+
+        except MySQLdb.IntegrityError as e:
+            error = 'Username already in use. Please use another username'
+            print(f"IntegrityError: {e}")
+        except MySQLdb.Error as e:
+            error = 'Username or password too long. Please try again.'
+            print(f"MySQLdb Error: {e}")
+        except Exception as e:
+            error = 'An unexpected error occurred. Please try again.'
+            print(f"Unexpected Error: {e}")
+        cursor.close()
+
+        if commited and action == "add":
+            for day in days_of_week:
+                day=(int(day) + day_offset - 1) % 7 + 1
+                for method in methods:
+                    deadline_split=utc_deadline.split(":")
+                    hour = int(deadline_split[0])
+                    minute = int(deadline_split[1])
+                    schedule(user_id, int(day), hour, minute, int(method))
+
+@login_required
 def settings():
     error = None
     commited = False
