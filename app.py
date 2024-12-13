@@ -31,6 +31,7 @@ app.add_url_rule('/generate-sync-token', methods=['GET'], view_func=generate_syn
 #text responses
 app.add_url_rule('/sms', methods=['GET', 'POST'], view_func=dynamic_sms)
 app.add_url_rule('/image', methods=['GET', 'POST'], view_func=image_reply)
+app.add_url_rule('/middle_page', methods=['GET', 'POST'], view_func=middle_page)
 
 #phone call roadmap urls
 app.add_url_rule('/called', methods=['GET', 'POST'], view_func=user_calls_us)

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <style>
+        body {
+          margin: 0;
+          font-family: Arial, Helvetica, sans-serif;
+        }
+        button {
+          background-color: white;
+          color: black;
+          border: 2px solid #04AA6D;
+          padding: 20px;
+          transition-duration: 0.4s;
+          display: block;
+          margin: 0 auto;
+          border-radius: 4px;
+          font-size: 20px;
+        }
+        button:hover {
+          background-color: #04AA6D;
+          color: white;
+        }
+        input {
+          font-size: 20px;
+          border: 2px solid pink;
+          border-radius: 4px;
+          padding: 20px;
+        }
+        .center {
+          font-size: 20px;
+          text-align: center;
+        }
+      </style>
+</head>
+<body>
+    <div class="center">
+        <h1>Welcome, {{name}}!</h1>
+        <button>
+            <a href="{{ url_for('settings') }}" style="text-decoration: none; color: inherit;">Update Your Check-In's Here</a>
+        </button>
+        <br />
+        <button>
+            <a href="https://smart-goat-modern.ngrok-free.app/message-status" style="text-decoration: none; color: inherit;">See Message Logs</a>
+        </button>
+    </div>
+</body>
+</html>

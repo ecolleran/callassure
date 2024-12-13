@@ -52,6 +52,14 @@ h2 {
     <h2>Hello, {{name}}! </h2>
     <h1 style="text-align: center;">Configure your check-in's here</h1>
     <form id="settingsForm" method="post">
+        <h2>Action:</h2>
+        <div>
+            <select value={action}>
+                <option value="add">Add Check-in</option>
+                <option value="remove">Remove Check-in</option>
+            </select>
+        </div>
+
         <h2>Select Days of the Week:</h2>
         <div>
             <input type="checkbox" id="Monday" name="days" value="1">
@@ -99,7 +107,7 @@ h2 {
 
         <input type="hidden" id="timezone" name="timezone">
 
-        <input class="button" type="submit" value="Register">
+        <input class="button" type="submit" value="Add Check-In">
     </form>
 
     <!-- errors -->

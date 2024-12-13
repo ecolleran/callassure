@@ -68,6 +68,10 @@ def logout():
     flash('You were just logged out :(')
     return redirect(url_for('login'))
 
+def middle_page():
+    firstname = session['firstname']
+    return render_template('middle_page.html', name=firstname)
+
 def login():
     error = None
     if request.method == 'POST':
@@ -93,14 +97,13 @@ def login():
             session['user_id'] = user_id
             session['firstname'] = name
             flash('You were just logged in!')
-            return redirect(url_for('settings'))
+            return redirect(url_for('middle_page'))
         else:
             error = 'Invalid Credentials. Please try again.'
         mysql.connection.commit()
         cursor.close()
     return render_template('login.html', error=error)
 
-@login_required
 def add_remove_checkin():
     error = None
     commited = False
@@ -111,7 +114,7 @@ def add_remove_checkin():
 
     if request.method == 'POST':
         action = data.get('action')
-        user_id = session['user_id']
+        user_id = data.get('user_id')
         deadline = data.get('checkin')
         days_of_week = data.get('days')
         methods = data.get('checkin_method')
