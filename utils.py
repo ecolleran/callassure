@@ -6,8 +6,11 @@ import os
 
 from twilio.request_validator import RequestValidator
 
-auth_token = os.environ['TWILIO_AUTH_TOKEN']
-#auth_token = read_secret('twilio-token')
+environment = os.getenv('FLASK_ENV', 'local')  #default to 'local' if not set
+if environment == 'docker':
+    auth_token = read_secret('twilio-token')
+else: 
+    auth_token = os.environ['TWILIO_AUTH_TOKEN']
 
 #wrapper to require a login for some pages
 def login_required(f):

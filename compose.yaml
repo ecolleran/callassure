@@ -21,6 +21,7 @@ services:
       - TWILIO_API_KEY=/run/secrets/twilio-api
       - TWILIO_API_SECRET=/run/secrets/twilio-api-secret
       - TWILIO_SERVICE_SID=/run/secrets/service-sid
+      - FLASK_ENV=docker
     depends_on:
       db:
         condition: service_healthy

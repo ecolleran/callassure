@@ -8,20 +8,21 @@ from twilio.jwt.access_token import AccessToken
 from twilio.jwt.access_token.grants import SyncGrant
 from utils import *
 
-### TWILIO SETUP ###
-#docker
-'''account_sid = read_secret('twilio-sid')
-auth_token = read_secret('twilio-token')
-api_key = read_secret('twilio-api')
-api_secret = read_secret('twilio-api-secret')
-service_sid = read_secret('service-sid')'''
+environment = os.getenv('FLASK_ENV', 'local')  #default to 'local' if not set
 
-#local
-account_sid = os.environ['TWILIO_ACCOUNT_SID']
-auth_token = os.environ['TWILIO_AUTH_TOKEN']
-api_key = os.environ['TWILIO_API_KEY']
-api_secret = os.environ['TWILIO_API_SECRET']
-service_sid = os.environ['TWILIO_SERVICE_SID']
+### TWILIO SETUP ###
+if environment= 'docker':
+    account_sid = read_secret('twilio-sid')
+    auth_token = read_secret('twilio-token')
+    api_key = read_secret('twilio-api')
+    api_secret = read_secret('twilio-api-secret')
+    service_sid = read_secret('service-sid')
+else:  # Local
+    account_sid = os.environ['TWILIO_ACCOUNT_SID']
+    auth_token = os.environ['TWILIO_AUTH_TOKEN']
+    api_key = os.environ['TWILIO_API_KEY']
+    api_secret = os.environ['TWILIO_API_SECRET']
+    service_sid = os.environ['TWILIO_SERVICE_SID']
 
 client = Client(account_sid, auth_token)
 twilio_number='+14252509408'
