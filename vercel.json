@@ -2,9 +2,13 @@
     "builds": [
       {
         "src": "app.py",
-        "use": "@vercel/python"
+        "use": "@vercel/python",
+        "config": { "runtime": "python3.12" }
       }
     ],
-    "installCommand": "apt-get update && apt-get install -y libmysqlclient-dev && pip install -r requirements.txt"
+    "routes": [
+      { "src": "/(.*)", "dest": "app.py" }
+    ],
+    "command": "python3 app.py"
   }
   

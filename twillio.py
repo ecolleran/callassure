@@ -11,7 +11,7 @@ from utils import *
 environment = os.getenv('FLASK_ENV', 'local')  #default to 'local' if not set
 
 ### TWILIO SETUP ###
-if environment= 'docker':
+if environment == 'docker':
     account_sid = read_secret('twilio-sid')
     auth_token = read_secret('twilio-token')
     api_key = read_secret('twilio-api')
