@@ -2,8 +2,9 @@
     "builds": [
       {
         "src": "app.py",
-        "use": "@vercel/python",
-        "config": { "maxLambdaSize": "15mb" }
+        "use": "@vercel/python"
       }
-    ]
+    ],
+    "installCommand": "apt-get update && apt-get install -y libmysqlclient-dev && pip install -r requirements.txt"
   }
+  
