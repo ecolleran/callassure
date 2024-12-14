@@ -9,6 +9,6 @@
     "routes": [
       { "src": "/(.*)", "dest": "app.py" }
     ],
-    "command": "python3 app.py"
+    "buildCommand": "python3 app.py"
   }
   
