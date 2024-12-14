@@ -8,7 +8,7 @@ from twilio.jwt.access_token import AccessToken
 from twilio.jwt.access_token.grants import SyncGrant
 from utils import *
 
-environment = os.getenv('FLASK_ENV', 'local')  #default to 'local' if not set
+#environment = os.getenv('FLASK_ENV', 'local')  #default to 'local' if not set
 
 ### TWILIO SETUP ###
 if environment == 'docker':

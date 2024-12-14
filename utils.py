@@ -7,6 +7,10 @@ import os
 from twilio.request_validator import RequestValidator
 
 environment = os.getenv('FLASK_ENV', 'local')  #default to 'local' if not set
+def read_secret(secret_name):
+    with open(f"/run/secrets/{secret_name}", "r") as file:
+        return file.read().strip()
+
 if environment == 'docker':
     auth_token = read_secret('twilio-token')
 else: 
