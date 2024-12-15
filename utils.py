@@ -1,6 +1,6 @@
 from flask import Flask, session, redirect, url_for, flash, abort, request
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import os
 
@@ -53,6 +53,11 @@ def validate_twilio_request(f):
 def read_secret(secret_name):
     with open(f"/run/secrets/{secret_name}", "r") as file:
         return file.read().strip()
+
+def timedelta_to_seconds(td):
+    if isinstance(td, timedelta):
+        return td.total_seconds()
+    return td
 
 def twiml(resp):
     resp = flask.Response(str(resp))

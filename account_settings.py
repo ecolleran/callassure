@@ -114,15 +114,35 @@ def add_remove_checkin():
 
     if request.method == 'POST':
         action = data.get('action')
-        user_id = data.get('user_id')
+        user_email = data.get('user_email')
         deadline = data.get('checkin')
-        days_of_week = data.get('days')
+        days_of_week = data.get('days_of_week')
         methods = data.get('checkin_method')
         timezone_str = data.get('timezone')
 
-        utc_deadline, day_offset=change_to_utc(timezone_str, deadline)
+        # Log received data for debugging
+        print(f"Received data: {data}")
+        # Validate required fields
+        if not action or not user_email or not deadline or not timezone_str:
+            return jsonify({'error': 'Missing required fields'}), 400
+        if not days_of_week or not isinstance(days_of_week, list):
+            return jsonify({'error': 'Invalid or missing days_of_week'}), 400
+        if not methods or not isinstance(methods, list):
+            return jsonify({'error': 'Invalid or missing checkin_method'}), 400
 
         cursor = mysql.connection.cursor()
+
+        #getting user_id from email in db
+        cursor.execute("SELECT user_id FROM members WHERE email = %s", [user_email])
+        user_id_list = cursor.fetchall()
+        if not user_id_list:
+            return jsonify({'error': 'User email not found in database'}), 404
+        user_id = user_id_list[0][0]
+
+        utc_deadline, day_offset=change_to_utc(timezone_str, deadline)
+        if not utc_deadline or not isinstance(day_offset, int):
+            return jsonify({'error': 'Failed to convert deadline to UTC'}), 500
+
         try:
             if action == "add":
                 for day in days_of_week:
@@ -134,7 +154,7 @@ def add_remove_checkin():
                         [user_id, day, utc_deadline, timezone_str, method])
                 mysql.connection.commit()
                 commited = True
-                flash('Check-ins Registered!')
+                message='Check-ins Registered!'
             
             elif action == "remove":
                 for day in days_of_week:
@@ -145,27 +165,71 @@ def add_remove_checkin():
                             [user_id, day, utc_deadline, method])
                 mysql.connection.commit()
                 commited = True
-                flash('Check-ins Removed.')
+                message='Check-ins Removed.'
 
         except MySQLdb.IntegrityError as e:
-            error = 'Username already in use. Please use another username'
+            error = 'IntegrityError: Duplicate or invalid data'
             print(f"IntegrityError: {e}")
         except MySQLdb.Error as e:
-            error = 'Username or password too long. Please try again.'
+            error = 'Database Error: Invalid input or query'
             print(f"MySQLdb Error: {e}")
         except Exception as e:
-            error = 'An unexpected error occurred. Please try again.'
+            error = 'An unexpected error occurred.'
             print(f"Unexpected Error: {e}")
-        cursor.close()
+        finally:
+            cursor.close()
 
-        if commited and action == "add":
-            for day in days_of_week:
-                day=(int(day) + day_offset - 1) % 7 + 1
-                for method in methods:
-                    deadline_split=utc_deadline.split(":")
-                    hour = int(deadline_split[0])
-                    minute = int(deadline_split[1])
-                    schedule(user_id, int(day), hour, minute, int(method))
+        if commited:
+            if action == "add":
+                for day in days_of_week:
+                    day = (int(day) + day_offset - 1) % 7 + 1
+                    for method in methods:
+                        deadline_split = utc_deadline.split(":")
+                        hour = int(deadline_split[0])
+                        minute = int(deadline_split[1])
+                        schedule(user_id, int(day), hour, minute, int(method))
+            return jsonify({'success': message}), 200
+        else:
+            return jsonify({'error': error or 'Failed to update check-ins'}), 500
+
+def get_checkins():
+    user_email = request.args.get('user_email')
+    print(user_email)
+    if not user_email:
+        return jsonify({'error': 'No user email provided'}), 400
+
+    try:
+        # Query the database to get the user's existing check-in settings
+        cursor = mysql.connection.cursor()
+
+        # Fetch the check-in schedule for the user
+        cursor.execute("""
+            SELECT dayofweek, utc_deadline, original_timezone, method_id
+            FROM checkin_schedule
+            WHERE member_id = (SELECT user_id FROM members WHERE email = %s)
+        """, [user_email])
+        
+        checkin_settings = cursor.fetchall()
+        
+        # If no check-in settings found, return an empty list
+        if not checkin_settings:
+            return jsonify({'checkin_settings': []}), 200
+
+        # Format the response in a way that's easy to handle in the frontend
+        formatted_settings = []
+        for setting in checkin_settings:
+            formatted_settings.append({
+                'dayofweek': setting[0],
+                'utc_deadline': timedelta_to_seconds(setting[1]) if isinstance(setting[1], timedelta) else setting[1].isoformat(),
+                'timezone': setting[2],
+                'method_id': setting[3]
+            })
+
+        return jsonify({'checkin_settings': formatted_settings}), 200
+
+    except Exception as e:
+        print(f"Error fetching settings: {e}")
+        return jsonify({'error': 'An error occurred while fetching the settings'}), 500
 
 @login_required
 def settings():

@@ -18,10 +18,12 @@ app.add_url_rule('/', view_func=hello)
 app.add_url_rule('/register', methods=['GET','POST'], view_func=register)
 app.add_url_rule('/settings', methods=['GET','POST'], view_func=settings)
 app.add_url_rule('/update-settings', methods=['POST'], view_func=add_remove_checkin)
+app.add_url_rule('/get-settings', methods=['GET'], view_func=get_checkins)
 app.add_url_rule('/login', methods=['GET','POST'], view_func=login)
 app.add_url_rule('/logout', view_func=logout)
 
 #scheduling & tracking
+app.add_url_rule('/get-message-logs', methods=['GET'], view_func=get_message_logs)
 app.add_url_rule('/message-status', methods=['GET','POST'], view_func=log_sms_staus)
 app.add_url_rule('/confirm', methods=['GET'], view_func=confirm_sms)
 app.add_url_rule('/jobs', methods=['GET'], view_func=show_jobs)

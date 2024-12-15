@@ -154,6 +154,39 @@ def log_sms_staus():
         cursor.close()
         return render_template('message_status.html', logs=logs)
 
+def get_message_logs():
+# Get the user_email from the request parameters
+    user_email = request.args.get('user_email')
+    if not user_email:
+        return jsonify({'error': 'No user email provided'}), 400
+    try: 
+        cursor = mysql.connection.cursor()        
+        cursor.execute("""SELECT phonenumber FROM members WHERE email = %s""", (user_email,))
+        user = cursor.fetchall()
+
+        # If no phone number is found, return an error
+        if not user:
+            return jsonify({'error': 'No user found with the given email'}), 404
+
+        user_phone = user[0][0]
+        user_phone = user_phone.replace('-', '')
+        print(user_phone)
+        cursor = mysql.connection.cursor(DictCursor)
+        # Fetch the message logs where the user's phone number is in "to" or "from"
+        cursor.execute("""SELECT * FROM message_logs WHERE `to` = %s OR `from` = %s ORDER BY timestamp DESC""", (user_phone, user_phone))
+            
+        logs = cursor.fetchall()
+        print(logs)
+
+        # Close the database connection
+        cursor.close()
+
+        # Format and return the logs
+        return jsonify({'message_logs': logs}), 200
+    except Exception as e:
+        print(f"Error fetching message logs: {e}")
+        return jsonify({'error': 'An error occurred while fetching the message logs'}), 500
+
 def confirm_sms():
     # unique_id = request.values.get('id', None)
     # Use a unique id associated with your user to figure out the Message Sid

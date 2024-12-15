@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_mysqldb import MySQL
+from flask_cors import CORS
 import os
 
 environment = os.getenv('FLASK_ENV', 'local')  #default to 'local' if not set
@@ -7,6 +8,8 @@ environment = os.getenv('FLASK_ENV', 'local')  #default to 'local' if not set
 ### FLASK SETUP ###
 app = Flask(__name__)
 app.secret_key='02ebaba3ce6e6cf74edb27a1c0e355b19199a81f0e6e8801c560d7ae4d9c4f6e'
+
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "https://call-assure.com"]}})
 
 ### SQL SETUP ###
 if environment == 'docker':
