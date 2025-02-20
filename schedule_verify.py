@@ -170,13 +170,11 @@ def get_message_logs():
 
         user_phone = user[0][0]
         user_phone = user_phone.replace('-', '')
-        print(user_phone)
         cursor = mysql.connection.cursor(DictCursor)
         # Fetch the message logs where the user's phone number is in "to" or "from"
         cursor.execute("""SELECT * FROM message_logs WHERE `to` = %s OR `from` = %s ORDER BY timestamp DESC""", (user_phone, user_phone))
             
         logs = cursor.fetchall()
-        print(logs)
 
         # Close the database connection
         cursor.close()
